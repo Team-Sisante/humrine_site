@@ -127,7 +127,7 @@ for (let attempt = 1; attempt <= 3; attempt++) {
         `--cache-from ${tag} ` +
         `--cache-to type=registry,ref=${tag},mode=max ` +
         `-t ${tag} -f ${dockerfile} .`;
-      execSync(buildCmd, { stdio: 'inherit' });
+      console.log('Current working directory:', process.cwd()); console.log('Files:', require('fs').readdirSync('.')); execSync(buildCmd, { stdio: 'inherit' });
       execSync(`docker push ${tag}`, { stdio: 'inherit' });
     } catch (e) {
       success = false;
