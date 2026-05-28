@@ -126,36 +126,6 @@ function runCommand(command, options = {}) {
   }
 }
 
-function runRemoteCommand(command, options = {}) {
-    const vmIp = process.env.GCP_VM_IP;                  // 136.109.209.69
-    const sshKey = path.join(os.homedir(), '.ssh', 'agent-key');  // key set up by 6.3
-    const sshUser = process.env.VM_SSH_USER || 'xmnione';          // adjust if your user is different
-
-    // Build the ssh command as an array – no shell parsing at all
-    const args = [
-        '-i', sshKey,
-        '-o', 'StrictHostKeyChecking=no',     // suppress host key prompts
-        '-o', 'UserKnownHostsFile=/dev/null',
-        `${sshUser}@${vmIp}`,
-        command
-    ];
-
-    const { spawn } = require('child_process');
-    return new Promise((resolve) => {
-        const proc = spawn('ssh', args, {
-            stdio: options.stdio || 'inherit',
-            shell: false          // no shell → braces/tabs stay literal
-        });
-        proc.on('error', (err) => {
-            console.error(`\x1b[31mSSH connection failed: ${err.message}\x1b[0m`);
-            resolve(false);
-        });
-        proc.on('close', (code) => {
-            resolve(code === 0);
-        });
-    });
-}
-
 function remoteDockerComposeUp(service, envFile, projectName, profile) {
   const vmIp = process.env.GCP_VM_IP;
   const sshUser = process.env.VM_SSH_USER;
