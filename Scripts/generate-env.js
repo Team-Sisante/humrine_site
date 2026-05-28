@@ -54,9 +54,10 @@ async function generate() {
   envVars.forEach(v => uniqueVars[v.name] = v.value);
 
   console.log(`Fetched ${envVars.length} variables from GitHub. Processing template...`);
+  console.log("Variables fetched:", Object.keys(uniqueVars));
   console.log(`TEMPLATE_FILE: ${TEMPLATE_FILE}, OUTPUT_FILE: ${OUTPUT_FILE}`);
   if (TEMPLATE_FILE) {
-    let content = fs.readFileSync(TEMPLATE_FILE, "utf8");
+    let content = fs.readFileSync(TEMPLATE_FILE, "utf8").replace(/\r/g, "");
     const secretsToFetch = (content.match(/^[A-Z_]+=<\?secret\?>/gm) || []).map(m => m.split("=")[0]);
     console.log(`Fetching ${secretsToFetch.length} secrets in parallel...`);
     await Promise.all(secretsToFetch.map(getGCPSecret));
@@ -64,6 +65,7 @@ async function generate() {
     // For <?var?> – log missing ones
     let missingVars = 0;
     content = content.replace(/^(\w+)=<\?var\?>$/gm, (m, k) => {
+      console.log(`Checking variable: ${k}, found: ${uniqueVars[k] !== undefined}, value: ${uniqueVars[k]}`);
       if (uniqueVars[k] !== undefined) {
         return `${k}="${uniqueVars[k]}"`;
       } else {
