@@ -122,11 +122,11 @@ if (!cfg) {
   process.exit(1);
 }
 
-// Consistent project naming: badminton-<environment>
-const projectName = `badminton-${cfg.env}`;
+// Consistent project naming: humrine-<environment>
+const projectName = `humrine-${cfg.env}`;
 const composeFile = 'docker-compose.vm.yml';
 
-process.chdir('/badminton_court');
+process.chdir('/humrine_site');
 
 // 1. Fix SSH key permissions
 try {
@@ -339,12 +339,12 @@ try {
 // Prepare VM directory (fix ownership so SCP can create subdirs)
 // ------------------------------------------------------------------
 console.log('Preparing deployment directory on VM...');
-execSync(`ssh -i /secret/agent-key ${SSH_OPTS} ${SSH_USER}@${vmIP} "sudo mkdir -p /opt/badminton_court/certs /opt/badminton_court/Scripts && sudo chown -R ${SSH_USER}:${SSH_USER} /opt/badminton_court"`, { stdio: 'inherit' });
+execSync(`ssh -i /secret/agent-key ${SSH_OPTS} ${SSH_USER}@${vmIP} "sudo mkdir -p /opt/humrine_site/certs /opt/humrine_site/Scripts && sudo chown -R ${SSH_USER}:${SSH_USER} /opt/humrine_site"`, { stdio: 'inherit' });
 
 // 7. Copy files to VM
 console.log('Copying deployment files to VM...');
 const scpBase = `scp -i /secret/agent-key ${SSH_OPTS}`;
-const vmDest = `${SSH_USER}@${vmIP}:/opt/badminton_court/`;
+const vmDest = `${SSH_USER}@${vmIP}:/opt/humrine_site/`;
 
 // Copy env file and compose file
 execSync(`${scpBase} ${cfg.envFile} ${composeFile} ${vmDest}`, { stdio: 'inherit' });
@@ -357,19 +357,14 @@ if (useNginx) {
   execSync(`${scpBase} -r certs ${vmDest}`, { stdio: 'inherit' });
 }
 
-// Copy mail init script (required by mail-staging / mail-production)
-execSync(`${scpBase} Scripts/mail-setup.sh ${vmDest}Scripts/`, { stdio: 'inherit' });
-// Ensure the script is executable on the VM (idempotent)
-execSync(`ssh -i /secret/agent-key ${SSH_OPTS} ${SSH_USER}@${vmIP} "chmod +x /opt/badminton_court/Scripts/mail-setup.sh"`, { stdio: 'inherit' });
-
 // 8. Verify files
 console.log('Verifying uploaded files…');
-let verifyFiles = `ls -la /opt/badminton_court/${composeFile} /opt/badminton_court/${cfg.envFile} /opt/badminton_court/Scripts/mail-setup.sh`;
+let verifyFiles = `ls -la /opt/humrine_site/${composeFile} /opt/humrine_site/${cfg.envFile}`;
 if (useNginx) {
   const nginxConfFile = `nginx-${target}.conf`;
-  verifyFiles += ` /opt/badminton_court/${nginxConfFile} /opt/badminton_court/certs/posteio-cert.pem /opt/badminton_court/certs/posteio-key.pem`;
+  verifyFiles += ` /opt/humrine_site/${nginxConfFile} /opt/humrine_site/certs/posteio-cert.pem /opt/humrine_site/certs/posteio-key.pem`;
 }
-const verifyCmd = `ssh -i /secret/agent-key ${SSH_OPTS} ${SSH_USER}@${vmIP} "${verifyFiles} && head -5 /opt/badminton_court/${composeFile}"`;
+const verifyCmd = `ssh -i /secret/agent-key ${SSH_OPTS} ${SSH_USER}@${vmIP} "${verifyFiles} && head -5 /opt/humrine_site/${composeFile}"`;
 execSync(verifyCmd, { stdio: 'inherit' });
 
 // 9. Deploy – login using piped token (no file on remote, no token in logs)
@@ -378,8 +373,8 @@ const tokenFile = '/tmp/gh_token';
 fs.writeFileSync(tokenFile, token, { mode: 0o600 });
 
 const deployCmd = [
-  `sudo docker compose -p ${projectName} -f /opt/badminton_court/${composeFile} --env-file /opt/badminton_court/${cfg.envFile} --profile ${cfg.profile} down --remove-orphans`,
-  `sudo docker compose -p ${projectName} -f /opt/badminton_court/${composeFile} --env-file /opt/badminton_court/${cfg.envFile} --profile ${cfg.profile} up -d --pull always --remove-orphans`
+  `sudo docker compose -p ${projectName} -f /opt/humrine_site/${composeFile} --env-file /opt/humrine_site/${cfg.envFile} --profile ${cfg.profile} down --remove-orphans`,
+  `sudo docker compose -p ${projectName} -f /opt/humrine_site/${composeFile} --env-file /opt/humrine_site/${cfg.envFile} --profile ${cfg.profile} up -d --pull always --remove-orphans`
 ].join(' ; ');
 
 const fullRemote = `sudo docker login ghcr.io -u ${GIT_REPO_USERNAME} --password-stdin && ${deployCmd}`;

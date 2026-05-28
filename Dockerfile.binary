@@ -1,0 +1,50 @@
+# Dockerfile.binary
+# Use a slim Debian image
+FROM ubuntu:24.04
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV DOCKER=true
+
+WORKDIR /app
+
+# Install minimal system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    postgresql-client \
+    curl \
+    ca-certificates \
+    tzdata \
+    fontconfig \
+    fonts-dejavu-core \
+    && fc-cache -f \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user
+RUN useradd --create-home --shell /bin/bash appuser
+
+# Copy the binary and the setup script
+COPY dist_linux/badminton_court_linux /app/
+COPY deploy/setup-binary.sh /usr/local/bin/setup-binary.sh
+
+# Ensure the setup script is executable
+RUN chmod +x /usr/local/bin/setup-binary.sh
+RUN chmod +x /app/badminton_court_linux
+
+# Pre-build Matplotlib font cache so it doesn't rebuild on every container start
+ENV MPLCONFIGDIR=/app/.matplotlib
+RUN mkdir -p /app/.matplotlib
+
+# Set environment variables for CA certificates
+ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+
+# Expose the port
+EXPOSE 8000
+
+# Set the entrypoint to our new binary-compatible script
+USER root
+ENTRYPOINT ["/usr/local/bin/setup-binary.sh"]
+
+# Default command to run the server
+CMD ["runserver", "--noreload", "0.0.0.0:8000"]

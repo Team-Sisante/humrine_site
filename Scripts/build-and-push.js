@@ -101,10 +101,10 @@ if (!TOKEN) {
 }
 
 // ---------------------------------------------------------------------------
-// 1. Generate .env.docker and compile the binary
+// 1. Generate .env.docker and compile the binary (SKIP FOR NOW)
 // ---------------------------------------------------------------------------
-execSync('node Scripts/generate-env.js development .env.docker', { stdio: 'inherit' });
-execSync('node Scripts/compile.js', { stdio: 'inherit' });
+// execSync('node Scripts/generate-env.js development .env.docker', { stdio: 'inherit' });
+// execSync('node Scripts/compile.js', { stdio: 'inherit' });
 
 // ---------------------------------------------------------------------------
 // 2. Login to GitHub Container Registry
@@ -115,15 +115,14 @@ execSync(`echo "${TOKEN}" | docker login ghcr.io -u xmione --password-stdin`, { 
 // 3. Build and push with retries
 // ---------------------------------------------------------------------------
 const images = [
-  { dockerfile: 'Dockerfile.binary', tag: 'ghcr.io/xmione/badminton_court-web:latest' },
-  { dockerfile: 'Dockerfile.posteio', tag: 'ghcr.io/xmione/badminton_court-mail:latest' }
+  { dockerfile: 'Dockerfile', tag: 'ghcr.io/xmione/humrine_site-web:latest' }
 ];
 
 for (let attempt = 1; attempt <= 3; attempt++) {
   let success = true;
   for (const { dockerfile, tag } of images) {
     try {
-      // Enable BuildKit with registry cache (pip cache is in Dockerfile)
+      // Enable BuildKit with registry cache
       const buildCmd = `DOCKER_BUILDKIT=1 docker build ` +
         `--cache-from ${tag} ` +
         `--cache-to type=registry,ref=${tag},mode=max ` +

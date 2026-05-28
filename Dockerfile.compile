@@ -1,0 +1,68 @@
+# =============================================================================
+#  Dockerfile.compile
+#  ---------------------------------------------------------------------------
+#  Purpose: Build a temporary environment that compiles the Django application
+#           into a single, standalone Linux binary using PyInstaller.
+#
+#  Why the --add-data line is used:
+#    - PyInstaller cannot always auto-discover Django management commands
+#      because the Django settings may not be fully loadable during analysis.
+#    - Adding the command file as plain data ensures it is present in the
+#      binary’s virtual filesystem. Django’s management‑command discovery
+#      will find it at runtime, regardless of build‑time import errors.
+# =============================================================================
+
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install system build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential libpq-dev \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies + PyInstaller
+COPY requirements.txt .
+RUN pip install 'pip<26' || true \
+    && pip install -r requirements.txt \
+    && pip install pyinstaller
+
+# Copy only necessary files for compilation (exclude deploy/)
+COPY badminton_court/ ./badminton_court/
+COPY court_management/ ./court_management/
+COPY inventory/ ./inventory/
+COPY news/ ./news/
+COPY templates/ ./templates/
+COPY static/ ./static/
+COPY manage.py .
+COPY requirements.txt .
+
+# Compile the binary
+# The entire management commands folder is bundled as data
+RUN export DJANGO_SETTINGS_MODULE=badminton_court.settings \
+    && export DEBUG=True \
+    && export SECRET_KEY=build-key-for-pyinstaller \
+    && export DATABASE_URL=sqlite:///tmp/dummy.db \
+    && export PYTHONPATH=/app \
+    && pyinstaller \
+        --onefile \
+        --name badminton_court_linux \
+        --clean \
+        --collect-submodules celery \
+        --collect-submodules kombu \
+        --collect-submodules badminton_court \
+        --collect-submodules court_management \
+        --collect-submodules inventory \
+        --collect-submodules news \
+        --copy-metadata django-bootstrap5 \
+        --copy-metadata django-allauth \
+        --hidden-import badminton_court.context_processors \
+        --hidden-import court_management.adapters \
+        --hidden-import court_management.email_backend \
+        --add-data "court_management/management/commands:court_management/management/commands" \
+        --add-data "templates:templates" \
+        --add-data "static:static" \
+        --add-data "news/templates:news/templates" \
+        --add-data "news/migrations:news/migrations" \
+        --collect-data allauth \
+        manage.py
