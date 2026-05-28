@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero-section text-center">
+    <div class="container position-relative">
+        <h1 class="display-3 fw-bold mb-4">Welcome to Humrine</h1>
+        <p class="lead mb-5">Your gateway to efficient management and payroll solutions.</p>
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-5">
+                <div class="glass-card">
+                    <h3>Badminton Court</h3>
+                    <p>Streamlined management for your sports facilities.</p>
+                    <a href="/badminton_court" class="btn-modern">Open App</a>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="glass-card">
+                    <h3>PaySol</h3>
+                    <p>Comprehensive payroll and HR management solutions.</p>
+                    <a href="/pay-sol" class="btn-modern">Open App</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h2 class="fw-bold">Innovation at Heart</h2>
+                <p>Humrine is dedicated to building tools that simplify complex workflows. Whether it's managing a sports club or handling enterprise-level payroll, our applications are built with user experience and reliability in mind.</p>
+            </div>
+            <div class="col-lg-6 text-center">
+                <div style="width: 100%; height: 300px; background: var(--secondary-gradient); border-radius: 20px; display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; font-weight: bold; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                    HUMRINE SOLUTIONS
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
