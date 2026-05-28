@@ -1,0 +1,10 @@
+[
+    ".env.dev", 
+    ".env.docker", 
+    ".env.staging", 
+    ".env.production",  
+    ".env.dev.template",
+    ".env.docker.template", 
+    ".env.staging.template", 
+    ".env.production.template"
+]
