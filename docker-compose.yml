@@ -1,0 +1,17 @@
+services:
+  web:
+    build: .
+    container_name: humrine_site_web
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - DJANGO_SETTINGS_MODULE=humrine_site.settings.dev
+    networks:
+      - humrine-network
+
+networks:
+  humrine-network:
+    driver: bridge
