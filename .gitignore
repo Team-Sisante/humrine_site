@@ -23,3 +23,5 @@ staticfiles/
 .env.staging
 .env.production
 # Note: .env.*.template and .env.*.safe are intentionally NOT ignored.
+node_modules/
+certs/

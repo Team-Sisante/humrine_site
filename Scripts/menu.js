@@ -336,7 +336,7 @@ async function executeMenuOption(choice) {
     case '2.1': {
       const inquirer = (await import('inquirer')).default;
       const { envFileName } = await inquirer.prompt({
-        type: 'list',
+        type: 'select',
         name: 'envFileName',
         message: 'Select environment to test:',
         choices: [
@@ -855,7 +855,7 @@ async function executeMenuOption(choice) {
     case '13.11': {
       const inquirer = (await import('inquirer')).default;
       const { target } = await inquirer.prompt({
-        type: 'list',
+        type: 'select',
         name: 'target',
         message: 'Select environment file to generate:',
         choices: [
@@ -884,7 +884,7 @@ async function executeMenuOption(choice) {
 
       // One prompt only – choose the GitHub Environment
       const { targetEnv } = await inquirer.prompt({
-        type: 'list',
+        type: 'select',
         name: 'targetEnv',
         message: 'Which GitHub Environment should receive the variables?',
         choices: [
