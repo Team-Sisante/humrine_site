@@ -16,6 +16,10 @@ staticfiles/
 .idea/
 *.swp
 
-# OS
-.DS_Store
-.env*
+# Environments
+.env
+.env.dev
+.env.docker
+.env.staging
+.env.production
+# Note: .env.*.template and .env.*.safe are intentionally NOT ignored.
