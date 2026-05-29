@@ -153,7 +153,7 @@ if (vmIpForSync && (target === 'staging' || target === 'production')) {
   let envContent = fs.readFileSync(cfg.envFile, 'utf8');
   let modified = false;
 
-  // Ensure ALLOWED_HOSTS contains the VM IP
+  // Ensure ALLOWED_HOSTS contains the VM's external IP
   const ahMatch = envContent.match(/^ALLOWED_HOSTS=(.*)$/m);
   if (ahMatch) {
     const rawValue = ahMatch[1].replace(/^["']|["']$/g, '');
@@ -162,6 +162,31 @@ if (vmIpForSync && (target === 'staging' || target === 'production')) {
       envContent = envContent.replace(/^ALLOWED_HOSTS=.*$/m, `ALLOWED_HOSTS="${newValue}"`);
       modified = true;
       console.log(`\x1b[32mAuto-added ${vmIpForSync} to ALLOWED_HOSTS\x1b[0m`);
+    }
+  }
+
+  // Ensure ALLOWED_HOSTS also contains the VM's internal IP (used by GCP health checks)
+  let internalIP = null;
+  try {
+    internalIP = execSync(
+      `gcloud compute instances describe ${process.env.GCP_VM_NAME} --zone=${process.env.GCP_ZONE} --project=${GCP_PROJECT_ID} --format="value(networkInterfaces[0].networkIP)"`,
+      { encoding: 'utf8', stdio: 'pipe' }
+    ).trim();
+  } catch (_) {
+    console.log('\x1b[33mWarning: Could not retrieve internal IP. Health checks may fail.\x1b[0m');
+  }
+
+  if (internalIP && internalIP !== vmIpForSync) {
+    // Re‑read the current ALLOWED_HOSTS line (it may have been modified above)
+    const ahMatch2 = envContent.match(/^ALLOWED_HOSTS=(.*)$/m);
+    if (ahMatch2) {
+      const rawValue2 = ahMatch2[1].replace(/^["']|["']$/g, '');
+      if (!rawValue2.split(',').map(h => h.trim()).includes(internalIP)) {
+        const newValue2 = rawValue2 ? `${rawValue2},${internalIP}` : internalIP;
+        envContent = envContent.replace(/^ALLOWED_HOSTS=.*$/m, `ALLOWED_HOSTS="${newValue2}"`);
+        modified = true;
+        console.log(`\x1b[32mAuto-added internal IP ${internalIP} to ALLOWED_HOSTS\x1b[0m`);
+      }
     }
   }
 
@@ -184,7 +209,7 @@ if (vmIpForSync && (target === 'staging' || target === 'production')) {
 
   if (modified) {
     fs.writeFileSync(cfg.envFile, envContent);
-    console.log(`\x1b[32mUpdated ${cfg.envFile} with current VM IP\x1b[0m`);
+    console.log(`\x1b[32mUpdated ${cfg.envFile} with current VM IPs\x1b[0m`);
   }
 }
 

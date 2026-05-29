@@ -18,18 +18,15 @@ services:
     restart: unless-stopped
     ports:
       - "${WEB_HTTPS_PORT_STAGING:-8001}:${WEB_HTTPS_PORT_STAGING:-8001}"
-    environment:
-      - NGINX_PORT=${WEB_HTTPS_PORT_STAGING:-8001}
-      - BACKEND_HOST=web-staging
     volumes:
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx-staging.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - web-staging
     networks:
       - humrine-network
     profiles:
       - staging
-
+  
   # Production Web Service
   web-production:
     container_name: humrine-web-production
@@ -49,9 +46,6 @@ services:
     restart: unless-stopped
     ports:
       - "${WEB_HTTPS_PORT_PRODUCTION:-8000}:${WEB_HTTPS_PORT_PRODUCTION:-8000}"
-    environment:
-      - NGINX_PORT=${WEB_HTTPS_PORT_PRODUCTION:-8000}
-      - BACKEND_HOST=web-production
     volumes:
       - ./nginx-production.conf:/etc/nginx/nginx.conf:ro
     depends_on:
