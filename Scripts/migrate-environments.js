@@ -8,23 +8,21 @@
  *
  * Usage:
  *   node Scripts/migrate-environments.js .env.staging development
- *   node Scripts/migrate-environments.js .env.production docker-production
+ *   node Scripts/migrate-environments.js                    (interactive)
  *
- * Requires GITHUB_TOKEN environment variable.
+ * Requires GITHUB_TOKEN in the loaded environment.
  */
 
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const readline = require('readline');
+const dotenv = require('dotenv');
 
-const REPO = process.env.GIT_REPO_USERNAME && process.env.GIT_REPO_REPONAME
-    ? `${process.env.GIT_REPO_USERNAME}/${process.env.GIT_REPO_REPONAME}`
-    : 'xmione/badminton_court';
-const TOKEN = process.env.GITHUB_TOKEN;
-
-if (!TOKEN) {
-    console.error('\x1b[31mError: GITHUB_TOKEN environment variable is not set.\x1b[0m');
-    process.exit(1);
+// Interactive prompt helper
+function ask(question) {
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    return new Promise(resolve => rl.question(question, ans => { rl.close(); resolve(ans.trim()); }));
 }
 
 // ----- Map GitHub Environment to its template file -----
@@ -35,6 +33,14 @@ const ENV_TEMPLATE_MAP = {
     'docker':      path.join(__dirname, '..', '.env.docker.template')
 };
 
+// Map target environment to the corresponding .env file
+const ENV_FILE_MAP = {
+    'staging':     path.join(__dirname, '..', '.env.staging'),
+    'production':  path.join(__dirname, '..', '.env.production'),
+    'development': path.join(__dirname, '..', '.env.dev'),
+    'docker':      path.join(__dirname, '..', '.env.docker')
+};
+
 function apiRequest(method, apiPath, body = null) {
     return new Promise((resolve, reject) => {
         const options = {
@@ -42,7 +48,7 @@ function apiRequest(method, apiPath, body = null) {
             path: apiPath,
             method: method,
             headers: {
-                'Authorization': `token ${TOKEN}`,
+                'Authorization': `token ${process.env.GITHUB_TOKEN}`,
                 'User-Agent': 'Node.js/migrate-environments',
                 'Accept': 'application/vnd.github.v3+json'
             }
@@ -97,8 +103,39 @@ function parseEnv(filePath) {
 }
 
 async function migrate() {
-    const inputFile = process.argv[2] || '.env.dev';
-    const environment = process.argv[3] || 'development';
+    let inputFile = process.argv[2];
+    let environment = process.argv[3];
+
+    // If arguments are missing, prompt interactively
+    if (!inputFile || !environment) {
+        console.log('\x1b[36mNo arguments provided – switching to interactive mode.\x1b[0m');
+        const choices = Object.keys(ENV_FILE_MAP);
+        const answer = await ask(`Select environment (${choices.join('/')}): `);
+        environment = answer.toLowerCase();
+        if (!ENV_FILE_MAP[environment]) {
+            console.error(`\x1b[31mInvalid environment: ${environment}\x1b[0m`);
+            process.exit(1);
+        }
+        inputFile = ENV_FILE_MAP[environment];   // use the .env file for this environment
+    }
+
+    // Load the .env file for the chosen environment (to get GITHUB_TOKEN, etc.)
+    const envFilePath = ENV_FILE_MAP[environment] || inputFile;
+    if (fs.existsSync(envFilePath)) {
+        dotenv.config({ path: envFilePath });
+        console.log(`\x1b[36mLoaded environment variables from ${envFilePath}\x1b[0m`);
+    } else {
+        console.log(`\x1b[33mWarning: ${envFilePath} not found. Proceeding with existing env vars.\x1b[0m`);
+    }
+
+    // Now check required variables
+    if (!process.env.GITHUB_TOKEN) {
+        console.error('\x1b[31mError: GITHUB_TOKEN environment variable is not set.\x1b[0m');
+        process.exit(1);
+    }
+    const REPO = process.env.GIT_REPO_USERNAME && process.env.GIT_REPO_REPONAME
+        ? `${process.env.GIT_REPO_USERNAME}/${process.env.GIT_REPO_REPONAME}`
+        : 'xmione/badminton_court';
 
     console.log(`\x1b[32mMigrating ${inputFile} to GitHub Environment "${environment}"...\x1b[0m`);
 

@@ -6,7 +6,8 @@
  * 3. Uploads them to GCP Secret Manager using gcloud CLI
  *
  * Usage:
- *   node Scripts/migrate-to-gcp-secrets.js
+ *   node Scripts/migrate-to-gcp-secrets.js          (interactive)
+ *   node Scripts/migrate-to-gcp-secrets.js staging  (specify environment)
  */
 
 const { execSync } = require('child_process');
@@ -14,6 +15,8 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const crypto = require('crypto');
+const readline = require('readline');
+const dotenv = require('dotenv');
 
 // ----- Fix gcloud TLS CA bundle on Windows (Git Bash / MSYS2) -----
 if (os.platform() === 'win32') {
@@ -41,18 +44,21 @@ if (os.platform() === 'win32') {
     }
 }
 
-const PASSPHRASE = process.env.ENC_PASSPHRASE;
-const FILES = ['.e.env.dev.enc', '.e.env.docker.enc', '.e.env.staging.enc', '.e.env.production.enc'];
-const PROJECT_ID = process.env.GCP_PROJECT_ID;
-if (!PASSPHRASE) {
-    console.error('\x1b[31mError: PASSPHRASE environment variable is not set.\x1b[0m');
-    process.exit(1);
+// Interactive prompt helper
+function ask(question) {
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    return new Promise(resolve => rl.question(question, ans => { rl.close(); resolve(ans.trim()); }));
 }
 
-if (!PROJECT_ID) {
-    console.error('\x1b[31mError: GCP_PROJECT_ID environment variable is not set.\x1b[0m');
-    process.exit(1);
-}
+// ----- Map environment to .env file -----
+const ENV_FILE_MAP = {
+    'staging':     path.join(__dirname, '..', '.env.staging'),
+    'production':  path.join(__dirname, '..', '.env.production'),
+    'development': path.join(__dirname, '..', '.env.dev'),
+    'docker':      path.join(__dirname, '..', '.env.docker')
+};
+
+const FILES = ['.e.env.dev.enc', '.e.env.docker.enc', '.e.env.staging.enc', '.e.env.production.enc'];
 
 // ----- Read template files to know which keys are secrets -----
 const templateFiles = [
@@ -113,11 +119,42 @@ function decryptEncFile(encryptedFile, passphrase) {
 }
 
 async function migrate() {
+    // Determine environment (interactive or from argument)
+    let environment = process.argv[2];
+    if (!environment) {
+        const choices = Object.keys(ENV_FILE_MAP);
+        const answer = await ask(`Select environment to load secrets from (${choices.join('/')}): `);
+        environment = answer.toLowerCase();
+    }
+    if (!ENV_FILE_MAP[environment]) {
+        console.error(`\x1b[31mInvalid environment: ${environment}\x1b[0m`);
+        process.exit(1);
+    }
+
+    // Load the .env file for this environment
+    const envFilePath = ENV_FILE_MAP[environment];
+    if (fs.existsSync(envFilePath)) {
+        dotenv.config({ path: envFilePath });
+        console.log(`\x1b[36mLoaded environment variables from ${envFilePath}\x1b[0m`);
+    } else {
+        console.log(`\x1b[33mWarning: ${envFilePath} not found. Proceeding with existing env vars.\x1b[0m`);
+    }
+
+    // Now check required variables
+    if (!process.env.ENC_PASSPHRASE) {
+        console.error('\x1b[31mError: ENC_PASSPHRASE environment variable is not set.\x1b[0m');
+        process.exit(1);
+    }
+    if (!process.env.GCP_PROJECT_ID) {
+        console.error('\x1b[31mError: GCP_PROJECT_ID environment variable is not set.\x1b[0m');
+        process.exit(1);
+    }
+
     console.log('\x1b[32mStarting Migration to GCP Secret Manager...\x1b[0m');
 
     // 1. Enable API (ignore if already enabled)
     console.log('\x1b[34mEnsuring Secret Manager API is enabled...\x1b[0m');
-    run(`gcloud services enable secretmanager.googleapis.com --project ${PROJECT_ID}`, true);
+    run(`gcloud services enable secretmanager.googleapis.com --project ${process.env.GCP_PROJECT_ID}`, true);
 
     const allSecrets = {};
 
@@ -128,7 +165,7 @@ async function migrate() {
         
         let content;
         try {
-            content = decryptEncFile(file, PASSPHRASE);
+            content = decryptEncFile(file, process.env.ENC_PASSPHRASE);
         } catch (e) {
             console.log(`\x1b[33m⚠ Failed to decrypt ${file}: ${e.message}\x1b[0m`);
             return;
@@ -137,7 +174,6 @@ async function migrate() {
         const env = parseEnvContent(content);
         
         for (const [key, value] of Object.entries(env)) {
-            // Only upload if the key is marked as <?secret?> in a template
             if (secretKeysFromTemplates.has(key)) {
                 allSecrets[key] = value;
             }
@@ -149,21 +185,21 @@ async function migrate() {
     for (const [key, value] of Object.entries(allSecrets)) {
         console.log(`\x1b[36mProcessing secret: ${key}\x1b[0m`);
         
-        // Check if secret exists
-        const exists = run(`gcloud secrets describe ${key} --project ${PROJECT_ID}`, true);
-        
+        const exists = run(`gcloud secrets describe ${key} --project ${process.env.GCP_PROJECT_ID}`, true);
         if (!exists) {
-            run(`gcloud secrets create ${key} --replication-policy="automatic" --project ${PROJECT_ID}`);
+            run(`gcloud secrets create ${key} --replication-policy="automatic" --project ${process.env.GCP_PROJECT_ID}`);
         }
         
-        // Add new version
         const tmpFile = path.join(os.tmpdir(), `gcp_secret_${Date.now()}.tmp`);
         fs.writeFileSync(tmpFile, value, 'utf8');
-        run(`gcloud secrets versions add ${key} --data-file="${tmpFile}" --project ${PROJECT_ID}`);
+        run(`gcloud secrets versions add ${key} --data-file="${tmpFile}" --project ${process.env.GCP_PROJECT_ID}`);
         fs.unlinkSync(tmpFile);
     }
 
     console.log('\x1b[32m\nMigration to GCP Secret Manager Complete!\x1b[0m');
 }
 
-migrate();
+migrate().catch(err => {
+    console.error(`\x1b[31mMigration failed: ${err.message}\x1b[0m`);
+    process.exit(1);
+});
