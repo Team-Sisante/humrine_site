@@ -17,7 +17,7 @@ services:
     image: nginx:alpine
     restart: unless-stopped
     ports:
-      - "${WEB_HTTPS_PORT_STAGING:-8001}:${WEB_HTTPS_PORT_STAGING:-8001}"
+      - "${WEB_HOST_PORT:-8001}:${WEB_HOST_PORT:-8001}"
     volumes:
       - ./nginx-staging.conf:/etc/nginx/nginx.conf:ro
     depends_on:
@@ -45,7 +45,7 @@ services:
     image: nginx:alpine
     restart: unless-stopped
     ports:
-      - "${WEB_HTTPS_PORT_PRODUCTION:-8000}:${WEB_HTTPS_PORT_PRODUCTION:-8000}"
+      - "${WEB_HOST_PORT:-8000}:${WEB_HOST_PORT:-8000}"
     volumes:
       - ./nginx-production.conf:/etc/nginx/nginx.conf:ro
     depends_on:
