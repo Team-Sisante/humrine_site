@@ -1,7 +1,7 @@
 events {}
 http {
     server {
-        listen __WEB_HTTPS_PORT__;
+        listen __WEB_HOST_PORT__;
         server_name _;
 
         location / {
