@@ -7,7 +7,6 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 const path = require('path');
 const os = require('os');
-const sudo = require('sudo-prompt');
 const dotenv = require('dotenv');
 
 console.log('--- Starting Certificate Generation and Host Configuration (Node.js) ---');
@@ -264,44 +263,23 @@ if (isElevatedRun) {
 } else {
   generateCertificates();
 
-  const options = { name: 'Badminton Court Setup' };
-  
   // Use the full path to node.exe and pass environment variables to elevated process
   const nodePath = process.execPath;
   const command = `"${nodePath}" "${__filename}" --elevated`;
-  
-  // Pass environment variables to the elevated process
-  options.env = {
-    ENVIRONMENT: environment,
-    CERT_DIR: certDir,
-    CERT_NAME: certName,
-    POSTE_HOSTNAME: commonName,
-    HOST_IP: hostIp,
-    // Pass all hostnames as a comma-separated string
-    ALL_HOSTNAMES: hostnamesArray.join(','),
-  };
 
   console.log('\n--- Requesting Administrator Privileges ---');
-  console.log('A UAC prompt will appear to configure your system. Please approve it.');
 
-  sudo.exec(command, options, (error, stdout, stderr) => {
-    if (error) {
-      console.error('✖ Failed to gain administrator privileges or an error occurred.');
-      console.error(error.message);
-      return;
-    }
-    console.log(stdout);
-    if (stderr) console.error(stderr);
-    
-    console.log('\n✅ All system configuration tasks completed successfully!');
-    console.log('\n🎉 FINAL STEPS:');
-    console.log('1. Close ALL Chrome windows and processes');
-    console.log('2. Go to chrome://net-internals/#hsts');
-    console.log(`3. Delete domain security policies for: ${hostnamesArray.join(', ')}`);
-    console.log('4. Restart Chrome');
-    console.log('\n5. You can now access your application at:');
-    hostnamesArray.forEach(host => {
-      console.log(`   - https://${host}:${process.env.POSTE_PORT || '8443'}`);
+  if (os.platform() === 'win32') {
+    execSync(`powershell -Command "Start-Process -Verb RunAs -FilePath 'cmd' -ArgumentList '/k ${command}'"`, { stdio: 'inherit' });
+  } else {
+    const terminals = ['gnome-terminal', 'konsole', 'xfce4-terminal', 'xterm'];
+    const terminal = terminals.find(t => {
+      try { execSync(`which ${t}`, { stdio: 'pipe' }); return true; } catch (e) { return false; }
     });
-  });
+    if (terminal) {
+      execSync(`${terminal} -- bash -c "sudo ${command}; read -p 'Press Enter to continue...'"`, { stdio: 'inherit' });
+    } else {
+      execSync(`sudo ${command}`, { stdio: 'inherit' });
+    }
+  }
 }

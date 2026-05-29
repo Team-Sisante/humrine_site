@@ -20,7 +20,6 @@
   "homepage": "https://github.com/xmione/humrine_site#readme",
   "dependencies": {
     "dotenv": "^17.4.2",
-    "inquirer": "^14.0.0",
-    "sudo-prompt": "^9.2.1"
+    "inquirer": "^14.0.0"
   }
 }
