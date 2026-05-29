@@ -26,3 +26,4 @@ staticfiles/
 node_modules/
 certs/
 venv/
+package.json

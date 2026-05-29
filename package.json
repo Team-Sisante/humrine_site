@@ -4,7 +4,7 @@
   "description": "The central hub and landing page for Humrine's suite of innovative management solutions.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "menu": "node Scripts/menu.js"
   },
   "repository": {
     "type": "git",
@@ -18,8 +18,22 @@
     "url": "https://github.com/xmione/humrine_site/issues"
   },
   "homepage": "https://github.com/xmione/humrine_site#readme",
+  "devDependencies": {
+    "@badeball/cypress-cucumber-preprocessor": "^24.0.1",
+    "@cypress/webpack-preprocessor": "^7.1.0",
+    "cross-env": "^10.1.0",
+    "cypress": "^15.3.0",
+    "dotenv": "^17.2.3",
+    "dotenv-cli": "^11.0.0",
+    "inquirer": "^12.9.6",
+    "path-browserify": "^1.0.1"
+  },
   "dependencies": {
-    "dotenv": "^17.4.2",
-    "inquirer": "^14.0.0"
+    "inquirer": "^12.9.6"
+  },
+  "cypress-cucumber-preprocessor": {
+    "stepDefinitions": [
+      "cypress/support/step_definitions/**/*.js"
+    ]
   }
 }
