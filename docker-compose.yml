@@ -6,9 +6,8 @@ services:
       - .:/app
     ports:
       - "8000:8000"
-    environment:
-      - DEBUG=True
-      - DJANGO_SETTINGS_MODULE=humrine_site.settings.dev
+    env_file:
+      - .env.docker
     networks:
       - humrine-network
 

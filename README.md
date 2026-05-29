@@ -13,7 +13,7 @@ Humrine Site is a Django-powered web application that serves as the primary gate
   - [Badminton Court Management](/badminton_court)
   - [PaySol Payroll Solutions](/pay-sol)
 - **Responsive Design**: Fully optimized for mobile, tablet, and desktop using Bootstrap 5.
-- **Modular Architecture**: Built with a scalable Django settings structure for easy transition between development and production environments.
+- **Unified Configuration**: Uses environment-driven settings via `.env` files for seamless management across development, staging, and production environments.
 
 ## Technology Stack
 
@@ -47,14 +47,17 @@ Humrine Site is a Django-powered web application that serves as the primary gate
    ```bash
    pip install -r requirements.txt
    ```
-   *(Note: Generate requirements.txt if not already present using `pip freeze > requirements.txt`)*
 
-4. **Run Migrations**:
+4. **Configure Environment**:
+   - Create a `.env` file based on the appropriate template (e.g., `.env.dev.template`).
+   - Fill in all required environment variables, including `SECRET_KEY` and database credentials.
+
+5. **Run Migrations**:
    ```bash
    python manage.py migrate
    ```
 
-5. **Start the server**:
+6. **Start the server**:
    ```bash
    python manage.py runserver
    ```
@@ -62,7 +65,7 @@ Humrine Site is a Django-powered web application that serves as the primary gate
 ## Project Structure
 
 - `home/`: Main application logic and views.
-- `humrine_site/settings/`: Modular settings (base.py, dev.py).
+- `humrine_site/settings/`: Unified settings in `base.py`.
 - `templates/`: Global and app-specific templates.
 - `Docs/`: Project documentation and plans.
 

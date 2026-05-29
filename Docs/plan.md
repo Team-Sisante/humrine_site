@@ -8,49 +8,34 @@ Create a professional, modern, and "alive" Django application for the main humri
 ## Key Files & Context
 - **Project Name:** `humrine_site`
 - **Location:** `/home/solomiosisante/humrine_site`
-- **Dependencies:** Django 5.x, django-bootstrap5 (consistent with other projects).
-- **Architecture:** Modular settings, standard Django app structure.
+- **Dependencies:** Django 6.x, django-bootstrap5 (consistent with other projects).
+- **Architecture:** Unified environment-driven settings.
 
 ## Implementation Steps
 
 ### 1. Project Initialization
-- Create the directory `/home/solomiosisante/humrine_site`.
-- Create a `Docs` directory within `/home/solomiosisante/humrine_site`.
-- Create a virtual environment `venv`.
-- Install dependencies: `django`, `django-bootstrap5`, `python-dotenv`, `psycopg2-binary`, `pillow`.
-- Initialize the Django project `humrine_site`.
-- Create a core application named `home`.
+- (Already implemented)
 
-### 2. Configuration & Settings
-- Implement a modular settings structure in `humrine_site/settings/`:
-    - `base.py`: Core Django settings.
-    - `dev.py`: Development-specific overrides.
-    - `prod.py`: Production-specific overrides (placeholder).
-- Configure `STATIC` and `TEMPLATES` paths.
-- Add `django-bootstrap5` to `INSTALLED_APPS`.
+### 2. Unified Environment-Driven Configuration
+- Implement a unified settings structure in `humrine_site/settings/`:
+    - `base.py`: Core Django settings that reads all environment-specific configurations directly from `os.environ` using `python-dotenv`.
+    - Delete `dev.py` and remove modular settings modules to prevent split-brain configuration.
+- Update entry points (`manage.py`, `wsgi.py`, `asgi.py`) and `docker-compose` files to point to `humrine_site.settings.base` as the single source of truth for settings.
 
 ### 3. Core Application Development
-- **Models:** Initially, a simple `ContactMessage` model if needed, but primarily focus on views.
-- **Views:** A simple `HomeView` to render the landing page.
-- **URLs:** Map the root URL to `HomeView`.
-- **Templates:**
-    - `base.html`: Common layout with a modern navbar and footer.
-    - `home.html`: Homepage content with modern CSS aesthetics (gradients, shapes, smooth transitions).
+- (Already implemented)
 
 ### 4. Aesthetics & Design
-- Use modern CSS techniques for a "polished" feel.
-- Implement CSS-only shapes and gradients as placeholders for images.
-- Ensure responsiveness for mobile and desktop.
-- Add smooth scroll and hover effects.
+- (Already implemented)
 
 ### 5. Integration
-- Add links to `humrine.com/badminton_court` and `humrine.com/pay-sol`.
+- (Already implemented)
 
 ## Verification & Testing
 - Run `python manage.py check` to verify settings.
 - Run migrations.
-- Start the development server and verify the homepage renders correctly.
-- Check mobile responsiveness.
+- Start the development server and verify the homepage renders correctly with local .env.
+- Verify production container starts with production .env.
 
 ## Migration & Rollback
-- Since this is a new project, rollback simply involves deleting the `humrine_site` directory.
+- Rollback involves reverting settings to modular structure if needed.
