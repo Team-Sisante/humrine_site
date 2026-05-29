@@ -263,25 +263,26 @@ if (isElevatedRun) {
 } else {
   generateCertificates();
 
-  // Use the full path to node.exe and pass environment variables to elevated process
-  const nodePath = process.execPath;
-  const command = `& '${nodePath}' '${scriptPath}' --elevated`;
-
   console.log('\n--- Requesting Administrator Privileges ---');
+  const nodePath = process.execPath;
+  const scriptPath = __filename;
 
   if (os.platform() === 'win32') {
-    // Correct quoting for PowerShell: wrap the whole node+script command in single quotes, 
-    // and use the ampersand (&) operator to execute it.
-    execSync(`powershell -Command "Start-Process -Verb RunAs -FilePath 'powershell' -ArgumentList '-Command ${command}'"`, { stdio: 'inherit' });
+    // Explicitly escape paths and use PowerShell to run as Admin
+    // Using /k to keep the window open to see the output
+    const cmd = `cmd /k "${nodePath}" "${scriptPath}" --elevated`;
+    const psCmd = `Start-Process -Verb RunAs -FilePath 'cmd' -ArgumentList '/k "${nodePath}" "${scriptPath}" --elevated'`;
+    execSync(`powershell -Command "${psCmd}"`, { stdio: 'inherit' });
   } else {
     const terminals = ['gnome-terminal', 'konsole', 'xfce4-terminal', 'xterm'];
     const terminal = terminals.find(t => {
       try { execSync(`which ${t}`, { stdio: 'pipe' }); return true; } catch (e) { return false; }
     });
+    const command = `sudo "${nodePath}" "${scriptPath}" --elevated`;
     if (terminal) {
-      execSync(`${terminal} -- bash -c "sudo ${command}; read -p 'Press Enter to continue...'"`, { stdio: 'inherit' });
+      execSync(`${terminal} -- bash -c "${command}; read -p 'Press Enter to continue...'"`, { stdio: 'inherit' });
     } else {
-      execSync(`sudo ${command}`, { stdio: 'inherit' });
+      execSync(`${command}`, { stdio: 'inherit' });
     }
   }
 }
