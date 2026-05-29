@@ -264,14 +264,17 @@ if (isElevatedRun) {
   generateCertificates();
 
   console.log('\n--- Requesting Administrator Privileges ---');
+  
+  // Get absolute paths to node and the script
   const nodePath = process.execPath;
   const scriptPath = __filename;
 
   if (os.platform() === 'win32') {
-    // Explicitly escape paths and use PowerShell to run as Admin
-    // Using /k to keep the window open to see the output
-    const cmd = `cmd /k "${nodePath}" "${scriptPath}" --elevated`;
-    const psCmd = `Start-Process -Verb RunAs -FilePath 'cmd' -ArgumentList '/k "${nodePath}" "${scriptPath}" --elevated'`;
+    // Correct escaping for PowerShell Start-Process:
+    // The -ArgumentList must be a single string, with inner arguments quoted.
+    // We escape the inner quotes for PowerShell using backticks or by doubling them.
+    // Using & to execute in case nodePath has spaces.
+    const psCmd = `Start-Process -Verb RunAs -FilePath 'cmd' -ArgumentList '/k \"\"${nodePath}\" \"${scriptPath}\" --elevated'`;
     execSync(`powershell -Command "${psCmd}"`, { stdio: 'inherit' });
   } else {
     const terminals = ['gnome-terminal', 'konsole', 'xfce4-terminal', 'xterm'];
