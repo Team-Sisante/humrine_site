@@ -191,7 +191,7 @@ if (vmIpForSync && (target === 'staging' || target === 'production')) {
   }
 
   // Ensure CSRF_TRUSTED_ORIGINS contains https://<VM_IP>:<HTTPS_PORT>
-  const portMatch = envContent.match(/^WEB_HTTPS_PORT=(.+)$/m);
+  const portMatch = envContent.match(/^WEB_HOST_PORT=(.+)$/m);
   const httpsPort = portMatch ? portMatch[1].replace(/['"]/g, '').trim() : '';
   if (httpsPort) {
     const csrfOrigin = `https://${vmIpForSync}:${httpsPort}`;
@@ -230,19 +230,19 @@ if (target === 'staging' || target === 'production') {
       waitAndExit(`ERROR: nginx is enabled for ${target} but the certs/ directory (with posteio-cert.pem) is missing.\nPlease run "node Scripts/generate-certs.js" first and commit the resulting certs/ folder.`);
     }
 
-    // Read the real WEB_HTTPS_PORT from the freshly generated .env file
-    const portMatch = generatedEnvContent.match(/^WEB_HTTPS_PORT=(.+)$/m);
+    // Read the real WEB_HOST_PORT from the freshly generated .env file
+    const portMatch = generatedEnvContent.match(/^WEB_HOST_PORT=(.+)$/m);
     // Strict lookup: generated .env -> .env.docker (process.env)
-    const webHttpsPort = portMatch ? portMatch[1].replace(/"/g, '').trim() : process.env.WEB_HTTPS_PORT;
+    const webHttpsPort = portMatch ? portMatch[1].replace(/"/g, '').trim() : process.env.WEB_HOST_PORT;
     
     if (!webHttpsPort) {
-      waitAndExit(`ERROR: WEB_HTTPS_PORT is not defined in ${cfg.envFile} or environment.`);
+      waitAndExit(`ERROR: WEB_HOST_PORT is not defined in ${cfg.envFile} or environment.`);
     }
 
     const nginxTemplate = fs.readFileSync(nginxTemplatePath, 'utf8');
     const webBackendService = `web-${target}`;
     const nginxConf = nginxTemplate
-      .replace(/__WEB_HTTPS_PORT__/g, webHttpsPort)
+      .replace(/__WEB_HOST_PORT__/g, webHttpsPort)
       .replace(/__BACKEND_SERVICE__/g, webBackendService);
     
     const nginxConfFile = `nginx-${target}.conf`;
