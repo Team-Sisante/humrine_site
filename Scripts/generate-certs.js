@@ -265,12 +265,14 @@ if (isElevatedRun) {
 
   // Use the full path to node.exe and pass environment variables to elevated process
   const nodePath = process.execPath;
-  const command = `"${nodePath}" "${__filename}" --elevated`;
+  const command = `& '${nodePath}' '${scriptPath}' --elevated`;
 
   console.log('\n--- Requesting Administrator Privileges ---');
 
   if (os.platform() === 'win32') {
-    execSync(`powershell -Command "Start-Process -Verb RunAs -FilePath 'cmd' -ArgumentList '/k ${command}'"`, { stdio: 'inherit' });
+    // Correct quoting for PowerShell: wrap the whole node+script command in single quotes, 
+    // and use the ampersand (&) operator to execute it.
+    execSync(`powershell -Command "Start-Process -Verb RunAs -FilePath 'powershell' -ArgumentList '-Command ${command}'"`, { stdio: 'inherit' });
   } else {
     const terminals = ['gnome-terminal', 'konsole', 'xfce4-terminal', 'xterm'];
     const terminal = terminals.find(t => {
