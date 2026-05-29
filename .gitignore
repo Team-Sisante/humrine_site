@@ -25,3 +25,4 @@ staticfiles/
 # Note: .env.*.template and .env.*.safe are intentionally NOT ignored.
 node_modules/
 certs/
+venv/
