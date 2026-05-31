@@ -107,7 +107,9 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/badminton_court">Badminton Court</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">About Us</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'contact' %}">Contact Us</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/court">Badminton Court</a></li>
                     <li class="nav-item"><a class="nav-link" href="/pay-sol">PaySol</a></li>
                 </ul>
             </div>
@@ -117,9 +119,27 @@
     {% block content %}{% endblock %}
 
     <footer class="footer mt-5">
-        <div class="container text-center">
-            <h5>Humrine © 2026</h5>
-            <p>Innovative solutions for modern problems.</p>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 text-center text-md-start">
+                    <h5>Humrine &copy; {% now "Y" %}</h5>
+                    <p>Innovative solutions for modern problems.</p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <ul class="list-inline mb-0">
+                        <li class="list-inline-item"><a href="{% url 'privacy_policy' %}" class="text-white text-decoration-none">Privacy Policy</a></li>
+                        <li class="list-inline-item mx-2">|</li>
+                        <li class="list-inline-item"><a href="{% url 'terms_of_service' %}" class="text-white text-decoration-none">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 text-center text-md-end">
+                    <ul class="list-inline mb-0">
+                        <li class="list-inline-item"><a href="{% url 'about' %}" class="text-white text-decoration-none">About</a></li>
+                        <li class="list-inline-item mx-2">|</li>
+                        <li class="list-inline-item"><a href="{% url 'contact' %}" class="text-white text-decoration-none">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </footer>
 
