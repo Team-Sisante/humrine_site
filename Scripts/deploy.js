@@ -222,7 +222,7 @@ if (generatedEnvContent.includes('<?var?>') || generatedEnvContent.includes('<?s
 // 3. Setup nginx if the template and certificates exist
 let useNginx = false;
 if (target === 'staging' || target === 'production') {
-  const nginxTemplatePath = 'nginx-staging.conf.template';
+  const nginxTemplatePath = `nginx-${target}.conf.template`;
   if (fs.existsSync(nginxTemplatePath)) {
     // Check for certificates directory (must be pre‑generated and committed)
     const certsDir = 'certs';
