@@ -27,3 +27,4 @@ node_modules/
 certs/
 venv/
 package.json
+nginx-staging.conf
