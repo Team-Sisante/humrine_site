@@ -28,3 +28,4 @@ certs/
 venv/
 package.json
 nginx-staging.conf
+nginx-production.conf
