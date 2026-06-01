@@ -26,7 +26,7 @@ def get_env_variable(var_name, default=None):
 SECRET_KEY = get_env_variable('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = get_env_variable('DEBUG', 'False') == 'True'
+DEBUG = get_env_variable('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = get_env_variable('ALLOWED_HOSTS', '').split(',')
 
