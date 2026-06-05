@@ -1,0 +1,31 @@
+<!-- templates/deals.html -->
+
+{% extends "base.html" %}
+{% load affiliate_tags %}
+
+{% block title %}Recommended Products - Humrine{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Recommended Tools &amp; Equipment</h1>
+    <p class="lead">We’ve personally tested these products – they help us run our operations smoothly.</p>
+    <p class="text-muted"><small>As an Amazon Associate, we may earn a commission from qualifying purchases. This does not affect the price you pay.</small></p>
+
+    <div class="row mt-4">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Wireless Mouse</h5>
+                    <p class="card-text">Comfortable and precise for long coding sessions.</p>
+                </div>
+                <div class="card-footer bg-white border-0">
+                    <a href="{% affiliate_url 'test-mouse' %}" class="btn btn-primary" rel="nofollow sponsored" target="_blank">
+                        View on Amazon
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- add more cards as you add more slugs -->
+    </div>
+</div>
+{% endblock %}
