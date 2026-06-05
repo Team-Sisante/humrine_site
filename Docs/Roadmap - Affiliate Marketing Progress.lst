@@ -10,7 +10,7 @@
 # affiliate_marketing/roadmap_progress.lst
 
 PHASE 1: CORE AFFILIATE LINK TRACKING SYSTEM
-[PENDING] 1.1 – Create TrackedAffiliateLink and AffiliateClick models.
+[DONE] 1.1 – Create TrackedAffiliateLink and AffiliateClick models.
 [PENDING] 1.2 – Implement affiliate_redirect view and /out/<slug>/ URL.
 [PENDING] 1.3 – Build {% affiliate_url %} template tag.
 [PENDING] 1.4 – Register models in Django admin.
