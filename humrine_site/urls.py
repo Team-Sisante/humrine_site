@@ -17,6 +17,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.views.generic import TemplateView   # <-- add this
 
 # Import the static page views
 from pages.views import (
@@ -36,4 +37,5 @@ urlpatterns = [
     path('feedback/',    FeedbackView.as_view(),       name='feedback'),
     path('privacy-policy/',  PrivacyPolicyView.as_view(),  name='privacy_policy'),
     path('terms-of-service/', TermsOfServiceView.as_view(), name='terms_of_service'),
+    path('deals/', TemplateView.as_view(template_name='deals.html'), name='deals'),  # <-- new
 ]

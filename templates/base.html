@@ -74,9 +74,25 @@
 
         .footer {
             background: #2d3436;
-            color: white;
-            padding: 40px 0;
-            margin-top: auto;
+            color: #e0e0e0;
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: auto;        /* keeps it at the bottom */
+            padding: 0;              /* we handle padding in .container */
+        }
+
+        .footer-link {
+            color: #ced4da;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .footer-link:hover {
+            color: #ffffff;
+            text-decoration: underline;
+        }
+
+        .text-muted-light {
+            color: #adb5bd !important;
         }
 
         .btn-modern {
@@ -120,26 +136,26 @@
 
     {% block content %}{% endblock %}
 
-    <footer class="footer mt-5">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-4 text-center text-md-start">
-                    <h5>Humrine &copy; {% now "Y" %}</h5>
-                    <p>Innovative solutions for modern problems.</p>
+    <footer class="footer">
+        <div class="container py-4">
+            <div class="row align-items-center">
+                <!-- Left: brand + tagline -->
+                <div class="col-md-6 mb-3 mb-md-0 text-center text-md-start">
+                    <span class="fw-bold fs-5">HUMRINE</span>
+                    <span class="text-muted-light d-block d-md-inline ms-md-2">&copy; {% now "Y" %} &mdash; Innovative solutions for modern problems.</span>
                 </div>
-                <div class="col-md-4 text-center">
-                    <ul class="list-inline mb-0">
-                        <li class="list-inline-item"><a href="{% url 'privacy_policy' %}" class="text-white text-decoration-none">Privacy Policy</a></li>
-                        <li class="list-inline-item mx-2">|</li>
-                        <li class="list-inline-item"><a href="{% url 'terms_of_service' %}" class="text-white text-decoration-none">Terms of Service</a></li>
+
+                <!-- Right: navigation links -->
+                <div class="col-md-6 text-center text-md-end">
+                    <ul class="list-inline mb-2 small">
+                        <li class="list-inline-item"><a href="{% url 'deals' %}" class="footer-link">Deals</a></li>
+                        <li class="list-inline-item ms-2"><a href="{% url 'privacy_policy' %}" class="footer-link">Privacy</a></li>
+                        <li class="list-inline-item ms-2"><a href="{% url 'terms_of_service' %}" class="footer-link">Terms</a></li>
+                        <li class="list-inline-item ms-2"><a href="{% url 'about' %}" class="footer-link">About</a></li>
+                        <li class="list-inline-item ms-2"><a href="{% url 'contact' %}" class="footer-link">Contact</a></li>
                     </ul>
-                </div>
-                <div class="col-md-4 text-center text-md-end">
-                    <ul class="list-inline mb-0">
-                        <li class="list-inline-item"><a href="{% url 'about' %}" class="text-white text-decoration-none">About</a></li>
-                        <li class="list-inline-item mx-2">|</li>
-                        <li class="list-inline-item"><a href="{% url 'contact' %}" class="text-white text-decoration-none">Contact</a></li>
-                    </ul>
+                    <!-- Optional subtle note -->
+                    <p class="text-muted-light small mb-0">As an affiliate, we may earn from qualifying purchases.</p>
                 </div>
             </div>
         </div>
