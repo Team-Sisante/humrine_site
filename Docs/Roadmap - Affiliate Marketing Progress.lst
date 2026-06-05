@@ -13,7 +13,7 @@ PHASE 1: CORE AFFILIATE LINK TRACKING SYSTEM
 [DONE] 1.1 – Create TrackedAffiliateLink and AffiliateClick models.
 [DONE] 1.2 – Implement affiliate_redirect view and /out/<slug>/ URL.
 [DONE] 1.3 – Build {% affiliate_url %} template tag.
-[PENDING] 1.4 – Register models in Django admin.
+[DONE] 1.4 – Register models in Django admin.
 [PENDING] 1.5 – Document manual link generation flow (Lazada/Shopee).
 
 PHASE 2: LAZADA & SHOPEE DIRECT AFFILIATE PROGRAMS
