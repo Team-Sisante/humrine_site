@@ -1,3 +1,4 @@
+# humrine_site/urls.py
 """
 URL configuration for humrine_site project.
 
