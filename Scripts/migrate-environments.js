@@ -128,6 +128,30 @@ async function migrate() {
         console.log(`\x1b[33mWarning: ${envFilePath} not found. Proceeding with existing env vars.\x1b[0m`);
     }
 
+    // ---- NEW: Load .env.common ----
+    const commonEnvPath = path.join(__dirname, '..', '.env.common');
+    if (fs.existsSync(commonEnvPath)) {
+        dotenv.config({ path: commonEnvPath });
+        console.log(`\x1b[36mLoaded shared variables from ${commonEnvPath}\x1b[0m`);
+    } else {
+        console.log(`\x1b[33mWarning: .env.common not found – shared variables will be skipped.\x1b[0m`);
+    }
+    const commonVars = fs.existsSync(commonEnvPath) ? parseEnv(commonEnvPath) : {};
+
+    // Read .env.common.template if it exists to know which common keys are marked <?var?>
+    const commonTemplatePath = path.join(__dirname, '..', '.env.common.template');
+    const commonVarKeys = new Set();
+    if (fs.existsSync(commonTemplatePath)) {
+        const templateContent = fs.readFileSync(commonTemplatePath, 'utf8');
+        const matches = templateContent.matchAll(/^(\w+)=\<\?var\?\>$/gm);
+        for (const match of matches) commonVarKeys.add(match[1]);
+        console.log(`\x1b[36mCommon template variables (<?var?>): ${[...commonVarKeys].join(', ')}\x1b[0m`);
+    } else {
+        // No template → upload all common variables
+        Object.keys(commonVars).forEach(k => commonVarKeys.add(k));
+        console.log(`\x1b[33mNo .env.common.template found – all common variables will be uploaded.\x1b[0m`);
+    }
+
     // Now check required variables
     if (!process.env.GITHUB_TOKEN) {
         console.error('\x1b[31mError: GITHUB_TOKEN environment variable is not set.\x1b[0m');
@@ -157,11 +181,14 @@ async function migrate() {
         console.log('\x1b[33m⚠ Template file not found for this environment. All variables will be uploaded (fallback).\x1b[0m');
     }
 
-    // 2. Read local .env file and upload only variables that appear in the template as <?var?>
+    // 2. Read local .env files and merge: common vars first, then environment‑specific (env overrides common)
     const vars = parseEnv(inputFile);
+    const allVars = { ...commonVars, ...vars };   // env-specific wins
+
     let skipped = 0;
-    for (const [key, value] of Object.entries(vars)) {
-        if (templateFound && !varKeysFromTemplate.has(key)) {
+    for (const [key, value] of Object.entries(allVars)) {
+        // Skip if a template exists but the key is not in either template
+        if (templateFound && !varKeysFromTemplate.has(key) && !commonVarKeys.has(key)) {
             skipped++;
             continue;
         }

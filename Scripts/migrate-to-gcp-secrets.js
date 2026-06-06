@@ -58,7 +58,10 @@ const ENV_FILE_MAP = {
     'docker':      path.join(__dirname, '..', '.env.docker')
 };
 
-const FILES = ['.e.env.dev.enc', '.e.env.docker.enc', '.e.env.staging.enc', '.e.env.production.enc'];
+const FILES = [
+    '.e.env.dev.enc', '.e.env.docker.enc', '.e.env.staging.enc', '.e.env.production.enc',
+    '.e.env.common.enc'   // <-- NEW: common encrypted file
+];
 
 // ----- Read template files to know which keys are secrets -----
 const templateFiles = [
@@ -75,6 +78,20 @@ templateFiles.forEach(file => {
         }
     }
 });
+
+// ---- NEW: Also load common template to capture its <?secret?> keys ----
+const commonTemplatePath = path.join(__dirname, '..', '.env.common.template');
+if (fs.existsSync(commonTemplatePath)) {
+    const commonContent = fs.readFileSync(commonTemplatePath, 'utf8');
+    const commonMatches = commonContent.matchAll(/^(\w+)=\<\?secret\?\>$/gm);
+    for (const match of commonMatches) {
+        secretKeysFromTemplates.add(match[1]);
+    }
+    console.log(`\x1b[36mCommon secret keys from template: ${[...secretKeysFromTemplates].join(', ')}\x1b[0m`);
+} else {
+    console.log(`\x1b[33mNo .env.common.template found – common secrets will be uploaded if present in any encrypted file.\x1b[0m`);
+}
+
 console.log(`\x1b[36mSecret keys from templates: ${[...secretKeysFromTemplates].join(', ')}\x1b[0m`);
 
 function run(command, silent = false) {
