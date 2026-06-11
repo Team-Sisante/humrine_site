@@ -1,3 +1,4 @@
+# humrine_site/humrine_site/settings/prod.py
 import os
 from django.core.exceptions import ImproperlyConfigured
 from .base import *

@@ -2,8 +2,6 @@
 __pycache__/
 *.py[cod]
 *.class
-venv/
-.env
 
 # Django
 db.sqlite3
@@ -17,12 +15,18 @@ staticfiles/
 *.swp
 
 # Environments
+venv/
 .env
 .env.common
 .env.dev
 .env.docker
 .env.staging
 .env.production
+.env.test.dev
+.env.test.docker
+.env.test.staging
+.env.test.production
+.env.ci
 # Note: .env.*.template and .env.*.safe are intentionally NOT ignored.
 node_modules/
 certs/
@@ -30,4 +34,3 @@ venv/
 package.json
 nginx-staging.conf
 nginx-production.conf
-

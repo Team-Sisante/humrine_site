@@ -10,39 +10,48 @@ const path = require('path');
 const readline = require('readline');
 const os = require('os');
 const isWindows = os.platform() === 'win32';
+const { spawn } = require('child_process');
+const cypressInstall = require('./cypress-install');
 
 // =============================================
 // Load environment variables dynamically
 // =============================================
 const dotenv = require('dotenv');
 
-// ENVIRONMENT can be set by the launcher, CLI arg, or OS env var
-// Default to 'staging' if not specified
-const ENVIRONMENT = process.env.ENVIRONMENT || process.argv[2] || 'staging';
+// 1. Strictly extract the environment without falling back to a default
+const ENVIRONMENT = process.env.ENVIRONMENT || process.argv[2];
+const ALLOWED_ENVIRONMENTS = ['development', 'docker', 'staging', 'production'];
 
-const envFileMap = {
-  development: '.env.dev',
-  staging: '.env.staging',
-  production: '.env.production',
-  docker: '.env.docker'
-};
-
-const envFile = envFileMap[ENVIRONMENT] || `.env.${ENVIRONMENT}`;
-const envPath = path.resolve(__dirname, '..', envFile);
-
-if (fs.existsSync(envPath)) {
-  dotenv.config({ path: envPath });
-  console.log(`\x1b[36mLoaded ${envFile} (ENVIRONMENT=${ENVIRONMENT})\x1b[0m`);
-} else {
-  // Fallback: try .env.staging if the specified file doesn't exist
-  const fallback = path.resolve(__dirname, '..', '.env.staging');
-  if (fs.existsSync(fallback)) {
-    dotenv.config({ path: fallback });
-    console.log(`\x1b[33m${envFile} not found, fell back to .env.staging\x1b[0m`);
-  } else {
-    console.error('\x1b[31mCould not find environment file (' + envFile + ')\x1b[0m');
-  }
+// 2. Guard Clause: Block execution if completely missing
+if (!ENVIRONMENT) {
+  console.error('\n\x1b[41m\x1b[37m FATAL ERROR \x1b[0m');
+  console.error('\x1b[31mMissing target environment configuration!\x1b[0m');
+  console.error('You must explicitly declare the environment when starting this menu.');
+  console.error('\x1b[36mExamples:\x1b[0m');
+  console.error('  node Scripts/menu.js development');
+  console.error('  cross-env ENVIRONMENT=docker node Scripts/menu.js\n');
+  process.exit(1);
 }
+
+// 3. Guard Clause: Block execution if the string is garbage/typoed
+if (!ALLOWED_ENVIRONMENTS.includes(ENVIRONMENT)) {
+  console.error('\n\x1b[41m\x1b[37m INVALID ENVIRONMENT \x1b[0m');
+  console.error(`\x1b[31m"${ENVIRONMENT}" is not a recognized environment profile.\x1b[0m`);
+  console.error(`Allowed options are: \x1b[33m${ALLOWED_ENVIRONMENTS.join(', ')}\x1b[0m\n`);
+  process.exit(1);
+}
+
+// 4. Resolve the correct env file based on strict validation
+const envSuffix = ENVIRONMENT === 'development' ? 'dev' : ENVIRONMENT;
+const envPath = path.resolve(process.cwd(), `.env.${envSuffix}`);
+const commonEnvPath = path.resolve(process.cwd(), `.env.common`);
+
+console.log(`\x1b[32m✔ Target environment verified: [${ENVIRONMENT.toUpperCase()}]\x1b[0m`);
+console.log(`Loading configurations from: ${envPath}\n`);
+
+// Load the exact dotEnv file validated above
+dotenv.config({ path: envPath });
+dotenv.config({ path: commonEnvPath });
 
 // --- Helper for Docker Compose ---
 function getDockerCompose() {
@@ -126,6 +135,19 @@ function runCommand(command, options = {}) {
   }
 }
 
+// Run a shell command with extra environment variables, piping I/O to the terminal
+function runCommandWithEnv(command, args, extraEnv = {}) {
+  const env = { ...process.env, ...extraEnv };
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { env, stdio: 'inherit' });
+    child.on('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`Command failed with exit code ${code}`));
+    });
+    child.on('error', reject);
+  });
+}
+
 function remoteDockerComposeUp(service, envFile, projectName, profile) {
   const vmIp = process.env.GCP_VM_IP;
   const sshUser = process.env.VM_SSH_USER;
@@ -136,7 +158,7 @@ function remoteDockerComposeUp(service, envFile, projectName, profile) {
   }
   // FIX: Force 'docker-compose' binary for Linux VM and fixed filename
   const remoteCmd = `sudo docker compose -p ${projectName} -f docker-compose.vm.yml --env-file ${envFile} --profile ${profile} up -d --force-recreate ${service}`;
-  const sshCmd = `ssh -i "${sshKey}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${sshUser}@${vmIp} "cd /opt/humrine_site && ${remoteCmd}"`;
+  const sshCmd = `ssh -i "${sshKey}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${sshUser}@${vmIp} "cd /opt/badminton_court && ${remoteCmd}"`;
   console.log(`\x1b[36mStarting ${service} (${projectName})...\x1b[0m`);
   try {
     execSync(sshCmd, { stdio: 'inherit' });
@@ -156,7 +178,7 @@ function remoteDockerComposeDownRmi(projectName, envFile, profile) {
   }
   // FIX: Force 'docker-compose' binary for Linux VM and fixed filename
   const remoteCmd = `sudo docker compose -p ${projectName} -f docker-compose.vm.yml --env-file ${envFile} --profile ${profile} down --rmi all`;
-  const sshCmd = `ssh -i "${sshKey}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${sshUser}@${vmIp} "cd /opt/humrine_site && ${remoteCmd}"`;
+  const sshCmd = `ssh -i "${sshKey}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${sshUser}@${vmIp} "cd /opt/badminton_court && ${remoteCmd}"`;
   console.log(`\x1b[33mRemoving all ${projectName} images and stopping containers...\x1b[0m`);
   try {
     execSync(sshCmd, { stdio: 'inherit' });
@@ -178,7 +200,7 @@ function remoteDeleteImage(service, imageTag, projectName, envFile, profile) {
   // FIX: Force 'docker-compose' binary for Linux VM and fixed filename
   const remoteCmd = `sudo docker compose -p ${projectName} -f docker-compose.vm.yml --env-file ${envFile} --profile ${profile} rm -sf ${service} 2>/dev/null && sudo docker rmi ${imageTag} 2>/dev/null || echo "Image ${imageTag} not found or already removed."`;
   
-  const sshCmd = `ssh -i "${sshKey}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${sshUser}@${vmIp} "cd /opt/humrine_site && ${remoteCmd}"`;
+  const sshCmd = `ssh -i "${sshKey}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${sshUser}@${vmIp} "cd /opt/badminton_court && ${remoteCmd}"`;
   console.log(`\x1b[33mRemoving image for ${service} (${imageTag})...\x1b[0m`);
   try {
     execSync(sshCmd, { stdio: 'inherit' });
@@ -199,7 +221,7 @@ function remoteFullCleanup(projectName, envFile, profile) {
 
   const remoteCmd = [
     `echo "=== Stopping and removing containers, images, volumes for ${projectName} ==="`,
-    `cd /opt/humrine_site`,
+    `cd /opt/badminton_court`,
     `sudo docker compose -p ${projectName} -f docker-compose.vm.yml --env-file ${envFile} --profile ${profile} down -v --rmi all`,
     `echo "=== Pruning all unused Docker resources ==="`,
     `sudo docker system prune -af --volumes`
@@ -283,9 +305,10 @@ async function executeMenuOption(choice) {
     case '1.2':
       runCommand("docker stop web-dev");
       runCommand("docker stop web-test");
-      const localDevDetachedParam = await ask('Enter additional parameter for cruise-config.xml (optional): ');
-      let localDevDetachedCommand = `echo '🚀 Starting local development environment in detached mode...' && node Scripts/run-detached.js`;
-      if (localDevDetachedParam) localDevDetachedCommand += ` ${localDevDetachedParam}`;
+      console.log('Ensuring development containers are running...');
+      runCommand(`${getDockerCompose()} --env-file .env.docker --env-file .env.common --profile dev up -d db redis mail-test`);
+      // wait for db healthy (optional, but recommended)
+      const localDevDetachedCommand = `echo '🚀 Starting local development environment in detached mode...' && node Scripts/run-detached.js`;
       runCommand(localDevDetachedCommand);
       await pause();
       break;
@@ -306,7 +329,7 @@ async function executeMenuOption(choice) {
     case '2.1': {
       const inquirer = (await import('inquirer')).default;
       const { envFileName } = await inquirer.prompt({
-        type: 'select',
+        type: 'list',
         name: 'envFileName',
         message: 'Select environment to test:',
         choices: [
@@ -359,12 +382,39 @@ async function executeMenuOption(choice) {
 
       console.log(`\x1b[36mOpening Cypress using ${envFileName}\x1b[0m`);
 
+      // Resolve absolute paths for the virtual environment relative to the script location
+      const appRoot = path.resolve(__dirname, '..');
+      const venvScriptPath = path.join(appRoot, 'venv', 'Scripts', 'activate.bat');
+      const venvBinPath = path.join(appRoot, 'venv', 'Scripts');
+      
+      let cypressCmd = `npx cypress open`;
+      let modifiedEnv = { ...process.env, CYPRESS_ENV_FILE: envPath };
+
+      // If a venv exists, modify the environment context variables and the execution chain
+      if (fs.existsSync(venvScriptPath)) {
+        console.log(`\x1b[32mInjecting Python virtual environment variables into Cypress...\x1b[0m`);
+        
+        // Prepend venv bin directory so that any downstream 'python' commands execution defaults here
+        if (process.env.PATH) {
+          modifiedEnv.PATH = `${venvBinPath}${path.delimiter}${process.env.PATH}`;
+        } else {
+          modifiedEnv.PATH = venvBinPath;
+        }
+        
+        // Set standard Python tracking properties
+        modifiedEnv.VIRTUAL_ENV = path.join(appRoot, 'venv');
+        
+        // Chain the native Windows activation batch file with the call keyword
+        cypressCmd = `call "${venvScriptPath}" && npx cypress open`;
+      }
+
       // Launch Cypress with CYPRESS_ENV_FILE explicitly in the environment
-      const cypressCmd = `npx cypress open`;
       try {
         execSync(cypressCmd, {
           stdio: 'inherit',
-          env: { ...process.env, CYPRESS_ENV_FILE: envPath }
+          cwd: appRoot,
+          env: modifiedEnv,
+          shell: 'cmd.exe' // Forces native command prompt routing to process .bat execution smoothly
         });
       } catch (err) {
         // Cypress exits with non-zero when closed; ignore
@@ -504,7 +554,7 @@ async function executeMenuOption(choice) {
       await pause();
       break;
     case '5.8':
-      runCommand(`npx cypress install`);
+      await cypressInstall();
       await pause();
       break;
     case '5.9':
@@ -801,31 +851,77 @@ async function executeMenuOption(choice) {
       await pause();
       break;
     case '13.10': {
-      const keyword = await ask('Enter keyword to search: ');
-      if (keyword) {
-        const safeKeyword = keyword.replace(/"/g, '"');
+      // FIXED: Safely handle both standard CommonJS and ES Module default wrappers
+      const inquirerModule = require('inquirer');
+      const inquirer = inquirerModule.default || inquirerModule;
+
+      const answers = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'keyword',
+          message: 'Enter keyword to search:'
+        },
+        {
+          type: 'list',
+          name: 'searchScope',
+          message: 'Select search scope:',
+          choices: [
+            { name: '1. Search all files in history', value: 'all' },
+            { name: '2. Search a specific file in history', value: 'specific' }
+          ],
+          when: (currAnswers) => currAnswers.keyword && currAnswers.keyword.trim() !== ''
+        },
+        {
+          type: 'input',
+          name: 'filePath',
+          message: 'Enter file path(s) (space-separated for multiple, e.g., roadmap_progress.lst Docs/Roadmap_Environments.md):',
+          when: (currAnswers) => currAnswers.searchScope === 'specific'
+        }
+      ]);
+
+      const { keyword, searchScope, filePath } = answers;
+
+      if (!keyword || keyword.trim() === '') {
+        await pause();
+        break;
+      }
+
+      const safeKeyword = keyword.replace(/"/g, '\\"');
+      let fileDelimiter = '';
+      if (searchScope === 'specific' && filePath && filePath.trim() !== '') {
+        fileDelimiter = `-- ${filePath.trim()}`;
+      }
+
+      const isWindows = process.platform === 'win32';
+
+      if (isWindows) {
         const gitBashPaths = [
-          'C:\Program Files\Git\git-bash.exe',
-          'C:\Program Files (x86)\Git\git-bash.exe',
+          'C:\\Program Files\\Git\\git-bash.exe',
+          'C:\\Program Files (x86)\\Git\\git-bash.exe',
         ];
+        
         let gitBash = null;
         for (const p of gitBashPaths) {
           if (fs.existsSync(p)) { gitBash = p; break; }
         }
+        
         if (gitBash) {
-          const bashCmd = `git log -S"${safeKeyword}" --all -p --color=always | less -R -p "${safeKeyword}" && read -p 'Press enter...'`;
-          execSync(`start "" "${gitBash}" -c "${bashCmd.replace(/"/g, '"')}"`, { stdio: 'ignore' });
+          const bashCmd = `git log -S"${safeKeyword}" --all -p --color=always ${fileDelimiter} | less -R -p "${safeKeyword}" && read -p "Press enter..."`;
+          execSync(`start "" "${gitBash}" -c "${bashCmd.replace(/"/g, '\\"')}"`, { stdio: 'ignore' });
         } else {
-          runCommand(`git -c color.ui=always log -S"${safeKeyword}" --all -p | more`);
+          runCommand(`git -c color.ui=always log -S"${safeKeyword}" --all -p ${fileDelimiter} | less -R`);
         }
+      } else {
+        runCommand(`git -c color.ui=always log -S"${safeKeyword}" --all -p ${fileDelimiter} | less -R -p "${safeKeyword}"`);
       }
+
       await pause();
       break;
     }
     case '13.11': {
       const inquirer = (await import('inquirer')).default;
       const { target } = await inquirer.prompt({
-        type: 'select',
+        type: 'list',
         name: 'target',
         message: 'Select environment file to generate:',
         choices: [
@@ -854,7 +950,7 @@ async function executeMenuOption(choice) {
 
       // One prompt only – choose the GitHub Environment
       const { targetEnv } = await inquirer.prompt({
-        type: 'select',
+        type: 'list',
         name: 'targetEnv',
         message: 'Which GitHub Environment should receive the variables?',
         choices: [
@@ -1217,6 +1313,62 @@ async function executeMenuOption(choice) {
       await pause();
       break;
     }
+    case '13.25':
+      console.log('\x1b[33mSetting up / updating social media apps…\x1b[0m');
+      runCommand('python manage.py setup_social_apps');
+      await pause();
+      break;
+    case '13.26':
+      console.log('\x1b[33mEnsuring social apps are up to date and validating…\x1b[0m');
+      runCommand('python manage.py setup_social_apps');
+      runCommand('python manage.py validate_social_secrets');
+      await pause();
+      break;
+    case '13.27':
+      console.log('\x1b[33mListing GCP secrets…\x1b[0m');
+      runCommand(`gcloud secrets list --project=${process.env.GCP_PROJECT_ID}`);
+      await pause();
+      break;         
+    case '13.28': {
+      const inquirer = (await import('inquirer')).default;
+      const { envName } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'envName',
+          message: 'Select environment to list GitHub variables:',
+          choices: ['development', 'docker', 'staging', 'production']
+        }
+      ]);
+
+      const repoFull = `${process.env.GIT_REPO_USERNAME}/${process.env.GIT_REPO_REPONAME}`;
+      const token = process.env.GITHUB_TOKEN;
+      if (!token) {
+        console.error('\x1b[31mGITHUB_TOKEN is not set.\x1b[0m');
+        await pause();
+        break;
+      }
+      try {
+        console.log(`\x1b[33mFetching GitHub Environment variables for ${envName}…\x1b[0m`);
+        const result = execSync(
+          `node Scripts/getGitHubVars.js ${repoFull} ${envName} ${token}`,
+          { encoding: 'utf8', stdio: 'pipe' }
+        );
+        const variables = JSON.parse(result);
+        if (!Array.isArray(variables) || variables.length === 0) {
+          console.log(`\x1b[33mNo variables found for ${envName}.\x1b[0m`);
+        } else {
+          console.log(`\x1b[36mVariables (${variables.length}):\x1b[0m`);
+          variables.forEach(v => {
+            // Show full value – if you want to mask, shorten or hide here
+            console.log(`  ${v.name} = ${v.value}`);
+          });
+        }
+      } catch (e) {
+        console.error(`\x1b[31mFailed to fetch GitHub variables: ${e.message}\x1b[0m`);
+      }
+      await pause();
+      break;
+    }
 
     // ==================== 16. STAGING CONTAINERS (now uses badminton-staging) ====================
     case '16.1':
@@ -1245,7 +1397,7 @@ async function executeMenuOption(choice) {
       const sshKeyStaging = path.resolve(__dirname, '..', '..', 'gocd-server', 'secrets', 'agent-key');
       // FIX: Use explicit docker-compose command on remote Linux VM and literal filename
       const remoteCmdStaging = [
-        `cd /opt/humrine_site`,
+        `cd /opt/badminton_court`,
         `sudo docker compose -p badminton-staging -f docker-compose.vm.yml --env-file .env.staging --profile staging up -d --force-recreate --remove-orphans`
       ].join(' && ');
       const sshCmdStaging = `ssh -i "${sshKeyStaging}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${sshUserStaging}@${vmIpStaging} "${remoteCmdStaging}"`;
@@ -1286,7 +1438,7 @@ async function executeMenuOption(choice) {
       const sshKeyProd = path.resolve(__dirname, '..', '..', 'gocd-server', 'secrets', 'agent-key');
       // FIX: Use explicit docker-compose command on remote Linux VM and literal filename
       const remoteCmdProd = [
-        `cd /opt/humrine_site`,
+        `cd /opt/badminton_court`,
         `sudo docker compose -p badminton-production -f docker-compose.vm.yml --env-file .env.production --profile production up -d --force-recreate --remove-orphans`
       ].join(' && ');
       const sshCmdProd = `ssh -i "${sshKeyProd}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${sshUserProd}@${vmIpProd} "${remoteCmdProd}"`;
@@ -1302,7 +1454,7 @@ async function executeMenuOption(choice) {
  
     // ==================== 18. DELETE STAGING IMAGES (now uses badminton-staging) ====================
     case '18.1':
-      remoteDeleteImage('web-staging', 'ghcr.io/xmione/humrine_site-web:latest', 'badminton-staging', '.env.staging', 'staging');
+      remoteDeleteImage('web-staging', 'ghcr.io/xmione/badminton_court-web:latest', 'badminton-staging', '.env.staging', 'staging');
       await pause();
       break;
     case '18.2':
@@ -1328,7 +1480,7 @@ async function executeMenuOption(choice) {
 
     // ==================== 19. DELETE PRODUCTION IMAGES ====================
     case '19.1':
-      remoteDeleteImage('web-production', 'ghcr.io/xmione/humrine_site-web:latest', 'badminton-production', '.env.production', 'production');
+      remoteDeleteImage('web-production', 'ghcr.io/xmione/badminton_court-web:latest', 'badminton-production', '.env.production', 'production');
       await pause();
       break;
     case '19.2':
@@ -1507,6 +1659,10 @@ async function showMenu() {
     console.log('   13.20. Open GitHub Personal Access Tokens page in browser');
     console.log('   13.21. Activate local venv shell');
     console.log('   13.22. Create/Recreate local venv');
+    console.log('   13.25. Setup/Update social media apps');
+    console.log('   13.26. Validate social media secrets');
+    console.log('   13.27. List GCP secrets');
+    console.log('   13.28. List GitHub Environment variables');
     console.log('');
     console.log('\x1b[36m14. DOCKER COMPOSE MANAGEMENT\x1b[0m');
     console.log('   14.1. Stop containers');
