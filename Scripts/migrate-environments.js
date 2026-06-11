@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * badminton_court/Scripts/migrate-environments.js
+ * humrine_site/Scripts/migrate-environments.js
  * Automates the migration of local .env files to GitHub Environments.
  * 1. Reads a .env file
  * 2. Uploads ONLY variables marked <?var?> in the matching environment template
@@ -143,7 +143,7 @@ async function migrate() {
     const commonVarKeys = new Set();
     if (fs.existsSync(commonTemplatePath)) {
         const templateContent = fs.readFileSync(commonTemplatePath, 'utf8');
-        const matches = templateContent.matchAll(/^(\w+)=\<\?var\?\>$/gm);
+        const matches = templateContent.matchAll(/^(\w+)=\<\?var\?\>\s*$/gm);
         for (const match of matches) commonVarKeys.add(match[1]);
         console.log(`\x1b[36mCommon template variables (<?var?>): ${[...commonVarKeys].join(', ')}\x1b[0m`);
     } else {
@@ -171,7 +171,7 @@ async function migrate() {
     if (templatePath && fs.existsSync(templatePath)) {
         templateFound = true;
         const content = fs.readFileSync(templatePath, 'utf8');
-        const matches = content.matchAll(/^(\w+)=\<\?var\?\>$/gm);
+        const matches = content.matchAll(/^(\w+)=\<\?var\?\>\s*$/gm);
         for (const match of matches) {
             varKeysFromTemplate.add(match[1]);
         }

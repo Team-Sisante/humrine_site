@@ -1,3 +1,5 @@
+# humrine_site/humrine_site/settings/base.py
+
 """
 Django settings for humrine_site project.
 """

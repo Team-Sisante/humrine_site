@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 /**
- * badminton_court/Scripts/migrate-to-gcp-secrets.js
+ * migrate-to-gcp-secrets.js
  * 1. Decrypts .e.env.*.enc files
- * 2. Extracts secrets based on template placeholders (<?secret?>), not keywords
+ * 2. Extracts secrets based on template placeholders (<?secret?>)
  * 3. Uploads them to GCP Secret Manager using gcloud CLI
+ *    Secret names are prefixed with the app name to avoid collisions
+ *    (e.g. humrine_site_POSTGRES_PASSWORD).
  *
  * Usage:
+ *   node Scripts/migrate-to-gcp-secrets.js staging <app_name>
  *   node Scripts/migrate-to-gcp-secrets.js          (interactive)
- *   node Scripts/migrate-to-gcp-secrets.js staging  (specify environment)
+ *   node Scripts/migrate-to-gcp-secrets.js staging  (specify environment) 
  */
 
 const { execSync } = require('child_process');
@@ -60,7 +63,7 @@ const ENV_FILE_MAP = {
 
 const FILES = [
     '.e.env.dev.enc', '.e.env.docker.enc', '.e.env.staging.enc', '.e.env.production.enc',
-    '.e.env.common.enc'   // <-- NEW: common encrypted file
+    '.e.env.common.enc'
 ];
 
 // ----- Read template files to know which keys are secrets -----
@@ -72,18 +75,18 @@ const secretKeysFromTemplates = new Set();
 templateFiles.forEach(file => {
     if (fs.existsSync(file)) {
         const content = fs.readFileSync(file, 'utf8');
-        const matches = content.matchAll(/^(\w+)=\<\?secret\?\>$/gm);
+        const matches = content.matchAll(/^(\w+)=\<\?secret\?\>\s*$/gm);
         for (const match of matches) {
             secretKeysFromTemplates.add(match[1]);
         }
     }
 });
 
-// ---- NEW: Also load common template to capture its <?secret?> keys ----
+// ---- Also load common template to capture its <?secret?> keys ----
 const commonTemplatePath = path.join(__dirname, '..', '.env.common.template');
 if (fs.existsSync(commonTemplatePath)) {
     const commonContent = fs.readFileSync(commonTemplatePath, 'utf8');
-    const commonMatches = commonContent.matchAll(/^(\w+)=\<\?secret\?\>$/gm);
+    const commonMatches = commonContent.matchAll(/^(\w+)=\<\?secret\?\>\s*$/gm);
     for (const match of commonMatches) {
         secretKeysFromTemplates.add(match[1]);
     }
@@ -97,7 +100,7 @@ console.log(`\x1b[36mSecret keys from templates: ${[...secretKeysFromTemplates].
 function run(command, silent = false) {
     if (!silent) console.log(`\x1b[36mRunning: ${command}\x1b[0m`);
     try {
-        return execSync(command, { encoding: 'utf8' }).trim();
+        return execSync(command, { encoding: 'utf8', env: { ...process.env } }).trim();
     } catch (e) {
         if (!silent) console.error(`\x1b[31mCommand failed: ${command}\x1b[0m`);
         return null;
@@ -138,11 +141,21 @@ function decryptEncFile(encryptedFile, passphrase) {
 async function migrate() {
     // Determine environment (interactive or from argument)
     let environment = process.argv[2];
+
+    // If no argument, prompt interactively with a list
     if (!environment) {
-        const choices = Object.keys(ENV_FILE_MAP);
-        const answer = await ask(`Select environment to load secrets from (${choices.join('/')}): `);
-        environment = answer.toLowerCase();
+        const { default: inquirer } = await import('inquirer');
+        const answer = await inquirer.prompt([
+            {
+                type: 'list',
+                name: 'env',
+                message: 'Select environment to load secrets from:',
+                choices: Object.keys(ENV_FILE_MAP),
+            }
+        ]);
+        environment = answer.env.toLowerCase();
     }
+
     if (!ENV_FILE_MAP[environment]) {
         console.error(`\x1b[31mInvalid environment: ${environment}\x1b[0m`);
         process.exit(1);
@@ -157,6 +170,20 @@ async function migrate() {
         console.log(`\x1b[33mWarning: ${envFilePath} not found. Proceeding with existing env vars.\x1b[0m`);
     }
 
+    // ---- Determine app name for secret prefix ----
+    let appName = process.argv[3];                     // explicit argument
+    if (!appName) {
+        // Also try GIT_REPO_REPONAME from the loaded environment
+        appName = process.env.GIT_REPO_REPONAME;
+    }
+    if (!appName) {
+        console.error('\x1b[31mError: App name must be provided as second argument or via GIT_REPO_REPONAME.\x1b[0m');
+        console.error('\x1b[33mUsage: node Scripts/migrate-to-gcp-secrets.js staging humrine_site\x1b[0m');
+        process.exit(1);
+    }
+    const prefix = `${appName}_`;
+    console.log(`\x1b[32mUsing secret name prefix: ${prefix}\x1b[0m`);
+
     // Now check required variables
     if (!process.env.ENC_PASSPHRASE) {
         console.error('\x1b[31mError: ENC_PASSPHRASE environment variable is not set.\x1b[0m');
@@ -169,9 +196,23 @@ async function migrate() {
 
     console.log('\x1b[32mStarting Migration to GCP Secret Manager...\x1b[0m');
 
-    // 1. Enable API (ignore if already enabled)
+    // 1. Ensure Secret Manager API is enabled
     console.log('\x1b[34mEnsuring Secret Manager API is enabled...\x1b[0m');
-    run(`gcloud services enable secretmanager.googleapis.com --project ${process.env.GCP_PROJECT_ID}`, true);
+    const apiAlreadyEnabled = run(
+        `gcloud services list --enabled --filter="config.name=secretmanager.googleapis.com" --project ${process.env.GCP_PROJECT_ID} --format="value(config.name)"`,
+        true
+    );
+    if (!apiAlreadyEnabled) {
+        const enableResult = run(
+            `gcloud services enable secretmanager.googleapis.com --project ${process.env.GCP_PROJECT_ID}`,
+            true
+        );
+        if (enableResult === null) {
+            console.log('\x1b[33m  Could not enable Secret Manager API (permission may be missing). Continuing anyway – the API might already be enabled.\x1b[0m');
+        }
+    } else {
+        console.log('\x1b[32m  Secret Manager API is already enabled.\x1b[0m');
+    }
 
     const allSecrets = {};
 
@@ -197,19 +238,20 @@ async function migrate() {
         }
     });
 
-    // 3. Upload to GCP
+    // 3. Upload to GCP (with prefix)
     console.log(`\x1b[34mUploading ${Object.keys(allSecrets).length} secrets to GCP...\x1b[0m`);
     for (const [key, value] of Object.entries(allSecrets)) {
-        console.log(`\x1b[36mProcessing secret: ${key}\x1b[0m`);
+        const fullSecretName = prefix + key;
+        console.log(`\x1b[36mProcessing secret: ${key} → ${fullSecretName}\x1b[0m`);
         
-        const exists = run(`gcloud secrets describe ${key} --project ${process.env.GCP_PROJECT_ID}`, true);
+        const exists = run(`gcloud secrets describe ${fullSecretName} --project ${process.env.GCP_PROJECT_ID}`, true);
         if (!exists) {
-            run(`gcloud secrets create ${key} --replication-policy="automatic" --project ${process.env.GCP_PROJECT_ID}`);
+            run(`gcloud secrets create ${fullSecretName} --replication-policy="automatic" --project ${process.env.GCP_PROJECT_ID}`);
         }
         
         const tmpFile = path.join(os.tmpdir(), `gcp_secret_${Date.now()}.tmp`);
         fs.writeFileSync(tmpFile, value, 'utf8');
-        run(`gcloud secrets versions add ${key} --data-file="${tmpFile}" --project ${process.env.GCP_PROJECT_ID}`);
+        run(`gcloud secrets versions add ${fullSecretName} --data-file="${tmpFile}" --project ${process.env.GCP_PROJECT_ID}`);
         fs.unlinkSync(tmpFile);
     }
 
