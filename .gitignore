@@ -18,6 +18,7 @@ staticfiles/
 
 # Environments
 .env
+.env.common
 .env.dev
 .env.docker
 .env.staging
@@ -29,3 +30,4 @@ venv/
 package.json
 nginx-staging.conf
 nginx-production.conf
+
