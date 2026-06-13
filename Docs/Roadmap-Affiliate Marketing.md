@@ -12,38 +12,39 @@ This document outlines the plan to integrate affiliate marketing into the Django
 
 ## Phase 1: Core Affiliate Link Tracking System
 
-- [ ] **1.1 – Model for Tracked Links**  
+- [x] **1.1 – Model for Tracked Links**  
   Create `TrackedAffiliateLink` model (`original_url`, `slug`, `title`, `merchant`, `created_at`).  
   Add `AffiliateClick` model for click analytics (`link`, `ip`, `user_agent`, `referer`, `clicked_at`).
 
-- [ ] **1.2 – Redirect View & URL**  
+- [x] **1.2 – Redirect View & URL**  
   Implement `affiliate_redirect(request, slug)` that logs a click and redirects to `original_url`.  
   Wire it to `/out/<slug>/`.
 
-- [ ] **1.3 – Template Tag**  
+- [x] **1.3 – Template Tag**  
   Build `{% affiliate_url slug %}` template tag to output the cloaked URL (e.g., `/out/best-mouse/`).
 
-- [ ] **1.4 – Admin Registration**  
+- [x] **1.4 – Admin Registration**  
   Register both models in Django admin for quick link management and click log inspection.
 
-- [ ] **1.5 – Manual Link Generation Flow**  
-  Document how to obtain Lazada/Shopee affiliate links and create corresponding `TrackedAffiliateLink` entries (either via admin or a management command).
+- [x] **1.5 – Manual Link Generation Flow**  
+  Document how to obtain Lazada/Shopee affiliate links and create corresponding `TrackedAffiliateLink` entries (either via admin or a management command).  
+  *Added CSV import management command (`import_affiliate_links`).*
 
 ---
 
 ## Phase 2: Lazada & Shopee Direct Affiliate Programs (Manual Links)
 
 - [ ] **2.1 – Affiliate Account Sign‑up**  
-  Register for Lazada Affiliate Program (PH) and Shopee Affiliate Program (PH).  
-  Confirm payment details (bank/GCash) and minimum payout thresholds.
+  - Shopee: application submitted, under review (15–30 working days).  
+  - Lazada: portal returned 502 error; retry later.  
+  *Involve Asia publisher account approved and used as immediate alternative.*
 
 - [ ] **2.2 – First Product Links**  
-  Manually generate 5–10 affiliate links from each platform via their dashboards.  
-  Store them in `TrackedAffiliateLink` and display on a test page.
+  - One real Shopee link generated via Involve Asia (`shopee-test`).  
+  - Still need to build up to 5–10 links from each platform.
 
-- [ ] **2.3 – Disclosure & Compliance**  
-  Add FTC‑style disclosure notice on pages containing affiliate links.  
-  Ensure all links use `rel="nofollow sponsored"`.
+- [x] **2.3 – Disclosure & Compliance**  
+  Added FTC‑style disclosure notice on deals page. All affiliate links use `rel="nofollow sponsored"`.
 
 - [ ] **2.4 – Cookie & Policy Considerations**  
   Review whether click tracking stores personal data under GDPR/Philippine law; if needed, implement consent mechanism or IP anonymisation.
@@ -52,14 +53,13 @@ This document outlines the plan to integrate affiliate marketing into the Django
 
 ## Phase 3: Involve Asia Integration (Optional, Multi‑Merchant API)
 
-- [ ] **3.1 – Involve Asia Publisher Account**  
-  Sign up as a publisher on Involve Asia and obtain API credentials.
+- [x] **3.1 – Involve Asia Publisher Account**  
+  - Account created, property Humrine.com approved.  
+  - Shopee PH and Lazada Talent (PH) campaigns applied; Shopee auto‑approved, Lazada pending.
 
 - [ ] **3.2 – API Client in Django**  
-  Write a service module (`involve_api.py`) to:  
-  - Search products across Lazada, Shopee, and other merchants.  
-  - Retrieve deep links / coupon codes.  
-  - Cache results to avoid rate limits.
+  - Service module `involve_api.py` written (with caching).  
+  - **BLOCKED:** API key not available yet; request submitted to Involve, under review (up to 48 working hours).
 
 - [ ] **3.3 – Dynamic Product Catalogue (Optional)**  
   Build a view that pulls live products from Involve Asia and renders them, each wrapped with our cloaked redirect.
@@ -71,11 +71,11 @@ This document outlines the plan to integrate affiliate marketing into the Django
 
 ## Phase 4: Analytics Dashboard & Reporting
 
-- [ ] **4.1 – Basic Click Stats**  
-  Create a simple view (e.g., `/affiliate/stats/`) that shows clicks per link, per day, and per merchant, using `AffiliateClick` data.
+- [x] **4.1 – Basic Click Stats**  
+  Created `/stats/` view with per‑link and daily click breakdowns.
 
-- [ ] **4.2 – Export & Filtering**  
-  Add date range filters and CSV/Excel export for clicks.
+- [x] **4.2 – Export & Filtering**  
+  Added date range filters and CSV export to the stats dashboard.
 
 - [ ] **4.3 – Conversion Attribution (Future)**  
   (Stretch) Integrate conversion pixels or server‑side postbacks if the networks support it.
@@ -105,4 +105,4 @@ This document outlines the plan to integrate affiliate marketing into the Django
 - **Involve Asia priority:** If we later need dynamic product feeds, Involve Asia’s unified API is the preferred route over scraping or per‑merchant APIs.
 
 ---
-*Last Updated: 2026-06-05*
+*Last Updated: 2026-06-13*
