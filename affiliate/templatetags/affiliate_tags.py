@@ -18,3 +18,8 @@ def affiliate_url(slug):
         return reverse('affiliate_redirect', kwargs={'slug': slug})
     except TrackedAffiliateLink.DoesNotExist:
         return '#'
+    
+@register.inclusion_tag('affiliate/includes/featured_products.html')
+def featured_products(count=3):
+    products = TrackedAffiliateLink.objects.exclude(image_url='').order_by('-created_at')[:count]
+    return {'products': products}    

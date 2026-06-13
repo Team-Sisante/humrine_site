@@ -1,0 +1,118 @@
+<!-- affiliate/templates/affiliate/stats.html -->
+
+{% extends "base.html" %}
+
+{% block title %}Affiliate Click Stats - Humrine{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4">Affiliate Click Stats</h1>
+
+    <form method="get" class="row g-3 align-items-end mb-4">
+        <div class="col-auto">
+            <label for="start_date" class="form-label">Start Date</label>
+            <input type="date" class="form-control" id="start_date" name="start_date"
+                   value="{{ start_date|date:'Y-m-d' }}">
+        </div>
+        <div class="col-auto">
+            <label for="end_date" class="form-label">End Date</label>
+            <input type="date" class="form-control" id="end_date" name="end_date"
+                   value="{{ end_date|date:'Y-m-d' }}">
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="?{% if start_date %}start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}&{% endif %}export=csv" class="btn btn-outline-secondary ms-2">
+                📥 Export CSV
+            </a>
+            <a href="?" class="btn btn-link">Reset</a>
+        </div>
+    </form>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-primary mb-3 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Total Clicks</h5>
+                    <p class="display-4">{{ total_clicks }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-success mb-3 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Links Tracked</h5>
+                    <p class="display-4">{{ clicks_per_link|length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-info mb-3 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Today's Clicks</h5>
+                    <p class="display-4">
+                        {% for day in clicks_per_day %}
+                            {% if day.day == today %}{{ day.count }}{% endif %}
+                        {% endfor %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header fw-bold">Clicks per Link ({{ start_date }} – {{ end_date }})</div>
+                <div class="card-body p-0">
+                    <table class="table table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Merchant</th>
+                                <th>Clicks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for link in clicks_per_link %}
+                                <tr>
+                                    <td>{{ link.title|default:link.slug }}</td>
+                                    <td><span class="badge bg-secondary">{{ link.merchant }}</span></td>
+                                    <td>{{ link.click_count }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="3" class="text-center text-muted">No links yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header fw-bold">Clicks per Day ({{ start_date }} – {{ end_date }})</div>
+                <div class="card-body p-0">
+                    <table class="table table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Clicks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for day in clicks_per_day %}
+                                <tr>
+                                    <td>{{ day.day|date:"M d, Y" }}</td>
+                                    <td>{{ day.count }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="2" class="text-center text-muted">No data yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

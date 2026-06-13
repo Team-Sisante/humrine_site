@@ -17,6 +17,9 @@ class TrackedAffiliateLink(models.Model):
         ],
         default='other',
     )
+    description = models.TextField(blank=True)
+    image_url = models.URLField(blank=True, max_length=2000)
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

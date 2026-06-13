@@ -1,5 +1,5 @@
 <!-- templates/base.html -->
- 
+
 {% load django_bootstrap5 %}
 <!DOCTYPE html>
 <html lang="en">
@@ -77,8 +77,8 @@
             color: #e0e0e0;
             font-size: 0.9rem;
             border-top: 1px solid rgba(255,255,255,0.1);
-            margin-top: auto;        /* keeps it at the bottom */
-            padding: 0;              /* we handle padding in .container */
+            margin-top: auto;
+            padding: 0;
         }
 
         .footer-link {
@@ -125,10 +125,15 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'deals' %}">Deals</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">About Us</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'contact' %}">Contact Us</a></li>
                     <li class="nav-item"><a class="nav-link" href="/court">Badminton Court</a></li>
                     <li class="nav-item"><a class="nav-link" href="javascript:alert('Watch out for this site soon!')">PaySol</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/admin/">Admin</a></li>
+                    {% if user.is_staff %}
+                        <li class="nav-item"><a class="nav-link" href="{% url 'affiliate_stats' %}">Stats</a></li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
@@ -139,13 +144,10 @@
     <footer class="footer">
         <div class="container py-4">
             <div class="row align-items-center">
-                <!-- Left: brand + tagline -->
                 <div class="col-md-6 mb-3 mb-md-0 text-center text-md-start">
                     <span class="fw-bold fs-5">HUMRINE</span>
                     <span class="text-muted-light d-block d-md-inline ms-md-2">&copy; {% now "Y" %} &mdash; Innovative solutions for modern problems.</span>
                 </div>
-
-                <!-- Right: navigation links -->
                 <div class="col-md-6 text-center text-md-end">
                     <ul class="list-inline mb-2 small">
                         <li class="list-inline-item"><a href="{% url 'deals' %}" class="footer-link">Deals</a></li>
@@ -154,7 +156,6 @@
                         <li class="list-inline-item ms-2"><a href="{% url 'about' %}" class="footer-link">About</a></li>
                         <li class="list-inline-item ms-2"><a href="{% url 'contact' %}" class="footer-link">Contact</a></li>
                     </ul>
-                    <!-- Optional subtle note -->
                     <p class="text-muted-light small mb-0">As an affiliate, we may earn from qualifying purchases.</p>
                 </div>
             </div>

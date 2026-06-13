@@ -9,7 +9,6 @@
 <div class="container py-5">
     <h1 class="mb-4">Recommended Tools &amp; Equipment</h1>
     <p class="lead">We’ve personally tested these products – they help us run our operations smoothly.</p>
-    <p class="text-muted"><small>As an Amazon Associate, we may earn a commission from qualifying purchases. This does not affect the price you pay.</small></p>
 
     <div class="row mt-4">
         <div class="col-md-4 mb-4">
@@ -19,13 +18,18 @@
                     <p class="card-text">Comfortable and precise for long coding sessions.</p>
                 </div>
                 <div class="card-footer bg-white border-0">
-                    <a href="{% affiliate_url 'test-mouse' %}" class="btn btn-primary" rel="nofollow sponsored" target="_blank">
-                        View on Amazon
+                    <a href="{% affiliate_url 'shopee-test' %}" class="btn btn-primary" rel="nofollow sponsored" target="_blank">
+                        View on Shopee
                     </a>
                 </div>
             </div>
         </div>
         <!-- add more cards as you add more slugs -->
+    </div>
+
+    <div class="alert alert-light border text-muted small mt-4" role="alert">
+        <strong>Disclosure:</strong> Some links on this page are affiliate links.
+        If you click and make a purchase, we may earn a small commission at no extra cost to you.
     </div>
 </div>
 {% endblock %}
