@@ -130,9 +130,9 @@
                     <li class="nav-item"><a class="nav-link" href="{% url 'contact' %}">Contact Us</a></li>
                     <li class="nav-item"><a class="nav-link" href="/court">Badminton Court</a></li>
                     <li class="nav-item"><a class="nav-link" href="javascript:alert('Watch out for this site soon!')">PaySol</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/admin/">Admin</a></li>
                     {% if user.is_staff %}
                         <li class="nav-item"><a class="nav-link" href="{% url 'affiliate_stats' %}">Stats</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/admin/">Admin</a></li>
                     {% endif %}
                 </ul>
             </div>
