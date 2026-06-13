@@ -30,7 +30,7 @@ PHASE 3: INVOLVE ASIA INTEGRATION (OPTIONAL)
 [PENDING] 3.4 – Add fallback/error handling for API.
 
 PHASE 4: ANALYTICS DASHBOARD & REPORTING
-[PENDING] 4.1 – Basic click stats page (/affiliate/stats/).
+[DONE] 4.1 – Basic click stats page (/stats/) with per-link and daily breakdown.
 [PENDING] 4.2 – Add date filters and CSV export.
 [PENDING] 4.3 – (Future) Conversion attribution integration.
 
