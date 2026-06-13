@@ -97,6 +97,19 @@ This document outlines the plan to integrate affiliate marketing into the Django
 
 ---
 
+## Phase 6: Google AdSense Integration
+
+- [ ] **6.1 – AdSense Account & Approval**  
+  Sign up for Google AdSense, add humrine.com, wait for review and approval.
+
+- [ ] **6.2 – Add Ad Code to Base Template**  
+  Insert Auto Ads script in `<head>` of `base.html`.
+
+- [ ] **6.3 – Verify Ads Display Correctly**  
+  Ensure ads appear without breaking layout; check policy compliance (no prohibited content).
+
+---
+
 ## Key Decisions & Architecture Notes
 
 - **Link ownership:** All outbound affiliate links go through our own redirect (`/out/<slug>/`). This gives us full click analytics independent of the networks.
