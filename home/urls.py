@@ -10,5 +10,4 @@ app_name = 'home'
 urlpatterns = [
     path('', HomeView.as_view(), name='home'),
     path('health/', views.health_check, name='health-check'),
-    path('', include('affiliate.urls')),
 ]
