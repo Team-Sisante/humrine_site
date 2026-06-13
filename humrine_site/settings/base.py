@@ -123,4 +123,24 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Default primary key field type
+# https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Involve API key
 INVOLVE_API_KEY = os.environ.get('INVOLVE_API_KEY', '')
+
+# CSRF trusted origins for production
+CSRF_TRUSTED_ORIGINS = [
+    'https://humrine.com',
+    'https://www.humrine.com',
+    'https://staging.humrine.com',
+    'https://www.staging.humrine.com',
+    'https://app.humrine.com',
+    'http://wwww.app.humrine.com',
+]
+
+# If behind a reverse proxy (like Nginx), uncomment the line below
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
