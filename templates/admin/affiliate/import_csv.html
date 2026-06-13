@@ -1,0 +1,50 @@
+<!-- templates/admin/affiliate/import_csv.html -->
+
+{% extends "admin/base_site.html" %}
+{% block content %}
+{% if preview_rows %}
+    <h2>Preview ({{ preview_rows|length }} rows)</h2>
+    <table style="width:100%; border-collapse:collapse;">
+        <thead>
+            <tr>
+                <th>Slug</th>
+                <th>Title</th>
+                <th>URL</th>
+                <th>Merchant</th>
+                <th>Description</th>
+                <th>Image</th>
+                <th>Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in preview_rows %}
+            <tr>
+                <td>{{ row.slug }}</td>
+                <td>{{ row.title }}</td>
+                <td style="max-width:150px; overflow:hidden; text-overflow:ellipsis;">{{ row.original_url }}</td>
+                <td>{{ row.merchant }}</td>
+                <td>{{ row.description|truncatechars:30 }}</td>
+                <td style="max-width:100px; overflow:hidden; text-overflow:ellipsis;">{{ row.image_url }}</td>
+                <td>{{ row.price|default:'' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <br>
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="confirm" value="1">
+        <input type="submit" value="Confirm and Import" class="default">
+        <a href="." style="margin-left:10px;">Cancel</a>
+    </form>
+{% else %}
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="Upload and Preview" class="default">
+    </form>
+    <div style="margin-top:20px;">
+        <p>Expected columns: <code>slug,title,original_url,merchant,description,image_url,price</code></p>
+    </div>
+{% endif %}
+{% endblock %}
