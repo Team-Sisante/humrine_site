@@ -1,12 +1,13 @@
 <!-- templates/home/home.html -->
 
 {% extends "base.html" %}
+{% load affiliate_tags %}
 
 {% block content %}
 <section class="hero-section text-center">
     <div class="container position-relative">
         <h1 class="display-3 fw-bold mb-4">Welcome to Humrine</h1>
-        <p class="lead mb-5">Your gateway to efficient management and payroll solutions.</p>
+        <p class="lead mb-5">Your gateway to efficient management, payroll solutions, and hand‑picked recommendations.</p>
         <div class="row g-4 justify-content-center">
             <div class="col-md-5">
                 <div class="glass-card">
@@ -23,6 +24,18 @@
                 </div>
             </div>
         </div>
+    </div>
+</section>
+
+<section class="py-5 bg-light">
+    <div class="container text-center">
+        <h2 class="fw-bold mb-3">🔥 Top Picks</h2>
+        <p class="lead mb-4">Check out our latest recommended products.</p>
+        {% featured_products 3 %}
+        <div class="mt-4">
+            <a href="{% url 'deals' %}" class="btn btn-outline-primary rounded-pill px-4">View All Deals</a>
+        </div>
+        <p class="text-muted small mt-3">As an affiliate, we may earn a commission from qualifying purchases at no extra cost to you.</p>
     </div>
 </section>
 

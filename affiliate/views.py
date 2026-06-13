@@ -8,6 +8,7 @@ from django.db.models import Count, Q
 from django.db.models.functions import TruncDate
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.generic import ListView
 
 from .models import TrackedAffiliateLink, AffiliateClick
 
@@ -85,3 +86,9 @@ def affiliate_stats(request):
         'end_date': end_date,
     }
     return render(request, 'affiliate/stats.html', context)
+
+
+class DealListView(ListView):
+    model = TrackedAffiliateLink
+    template_name = 'affiliate/deal_list.html'
+    context_object_name = 'links'

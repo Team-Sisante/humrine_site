@@ -24,17 +24,18 @@ from pages.views import (
     AboutView, ContactView, FeedbackView,
     PrivacyPolicyView, TermsOfServiceView
 )
+from affiliate.views import DealListView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     
     # Existing home app – DO NOT CHANGE
     path('', include('home.urls')),
-    path('', include('affiliate.urls')), 
+    path('', include('affiliate.urls')),
     path('about/', AboutView.as_view(), name='about'),
     path('contact/', ContactView.as_view(), name='contact'),
     path('feedback/', FeedbackView.as_view(), name='feedback'),
     path('privacy-policy/', PrivacyPolicyView.as_view(), name='privacy_policy'),
     path('terms-of-service/', TermsOfServiceView.as_view(), name='terms_of_service'),
-    path('deals/', TemplateView.as_view(template_name='deals.html'), name='deals'),
+    path('deals/', DealListView.as_view(), name='deals'),
 ]

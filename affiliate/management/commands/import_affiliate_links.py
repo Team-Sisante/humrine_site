@@ -33,6 +33,9 @@ class Command(BaseCommand):
                         'title': title,
                         'original_url': original_url,
                         'merchant': merchant,
+                        'description': row.get('description', '').strip(),
+                        'image_url': row.get('image_url', '').strip(),
+                        'price': row.get('price', '').strip() or None,
                     }
                 )
                 if created_flag:

@@ -1,0 +1,50 @@
+<!-- affiliate/templates/affiliate/deal_list.html -->
+
+{% extends "base.html" %}
+{% load affiliate_tags %}
+
+{% block title %}Recommended Products - Humrine{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Recommended Products</h1>
+    <p class="lead">We've curated a selection of products we think you'll enjoy. If you click a link and make a purchase, we may earn a small commission at no extra cost to you.</p>
+
+    <div class="row mt-4">
+        {% for link in links %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    {% if link.image_url %}
+                        <img src="{{ link.image_url }}" class="card-img-top" alt="{{ link.title }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ link.title|default:link.slug }}</h5>
+                        {% if link.description %}
+                            <p class="card-text">{{ link.description }}</p>
+                        {% else %}
+                            <p class="card-text text-muted">{{ link.merchant }}</p>
+                        {% endif %}
+                        {% if link.price %}
+                            <p class="card-text fw-bold">₱{{ link.price }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer bg-white border-0">
+                        <a href="{% affiliate_url link.slug %}" class="btn btn-primary" rel="nofollow sponsored" target="_blank">
+                            View on {{ link.merchant|title }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <p class="text-muted">No products yet. Check back soon!</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="alert alert-light border text-muted small mt-4" role="alert">
+        <strong>Disclosure:</strong> Some links on this page are affiliate links.
+        If you click and make a purchase, we may earn a small commission at no extra cost to you.
+    </div>
+</div>
+{% endblock %}

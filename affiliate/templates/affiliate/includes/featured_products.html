@@ -1,0 +1,24 @@
+<!-- affiliate/templates/affiliate/includes/featured_products.html -->
+{% load affiliate_tags %}
+<div class="row g-4 justify-content-center">
+    {% for product in products %}
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <img src="{{ product.image_url }}" class="card-img-top" alt="{{ product.title }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ product.title }}</h5>
+                    {% if product.price %}
+                        <p class="card-text fw-bold">₱{{ product.price }}</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-white border-0">
+                    <a href="{% affiliate_url product.slug %}" class="btn btn-primary btn-sm" rel="nofollow sponsored" target="_blank">
+                        View on {{ product.merchant|title }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12 text-center text-muted">No featured products yet.</div>
+    {% endfor %}
+</div>
