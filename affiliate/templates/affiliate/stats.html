@@ -8,6 +8,26 @@
 <div class="container py-4">
     <h1 class="mb-4">Affiliate Click Stats</h1>
 
+    <form method="get" class="row g-3 align-items-end mb-4">
+        <div class="col-auto">
+            <label for="start_date" class="form-label">Start Date</label>
+            <input type="date" class="form-control" id="start_date" name="start_date"
+                   value="{{ start_date|date:'Y-m-d' }}">
+        </div>
+        <div class="col-auto">
+            <label for="end_date" class="form-label">End Date</label>
+            <input type="date" class="form-control" id="end_date" name="end_date"
+                   value="{{ end_date|date:'Y-m-d' }}">
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="?{% if start_date %}start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}&{% endif %}export=csv" class="btn btn-outline-secondary ms-2">
+                📥 Export CSV
+            </a>
+            <a href="?" class="btn btn-link">Reset</a>
+        </div>
+    </form>
+
     <div class="row mb-4">
         <div class="col-md-4">
             <div class="card text-white bg-primary mb-3 shadow-sm">
@@ -42,7 +62,7 @@
     <div class="row">
         <div class="col-md-6 mb-4">
             <div class="card shadow-sm">
-                <div class="card-header fw-bold">Clicks per Link</div>
+                <div class="card-header fw-bold">Clicks per Link ({{ start_date }} – {{ end_date }})</div>
                 <div class="card-body p-0">
                     <table class="table table-striped mb-0">
                         <thead>
@@ -70,7 +90,7 @@
 
         <div class="col-md-6 mb-4">
             <div class="card shadow-sm">
-                <div class="card-header fw-bold">Clicks per Day (Last 30 Days)</div>
+                <div class="card-header fw-bold">Clicks per Day ({{ start_date }} – {{ end_date }})</div>
                 <div class="card-body p-0">
                     <table class="table table-striped mb-0">
                         <thead>
