@@ -25,7 +25,8 @@ PHASE 2: LAZADA & SHOPEE DIRECT AFFILIATE PROGRAMS
 PHASE 3: INVOLVE ASIA INTEGRATION (OPTIONAL)
 [DONE] 3.1 – Register Involve Asia publisher account.
        - Account created, property Humrine.com under review (up to 48 hrs).
-[PENDING] 3.2 – Implement Involve API client with caching.
+[BLOCKED] 3.2 – Implement Involve API client with caching.
+         - API key not available in dashboard. Request submitted, under review (up to 48 hrs).
 [PENDING] 3.3 – Build dynamic product catalogue view (if needed).
 [PENDING] 3.4 – Add fallback/error handling for API.
 
