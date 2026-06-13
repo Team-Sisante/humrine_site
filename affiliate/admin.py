@@ -1,13 +1,102 @@
 # affiliate/admin.py
 
 from django.contrib import admin
+from django.shortcuts import redirect, render
+from django.urls import path
+from django import forms
+from django.contrib import messages
+import csv
+from io import TextIOWrapper
 from .models import TrackedAffiliateLink, AffiliateClick
+
+
+class CSVUploadForm(forms.Form):
+    csv_file = forms.FileField(label='CSV file')
+
 
 @admin.register(TrackedAffiliateLink)
 class TrackedAffiliateLinkAdmin(admin.ModelAdmin):
     list_display = ['title', 'slug', 'merchant', 'created_at']
     search_fields = ['title', 'slug', 'original_url']
-    prepopulated_fields = {'slug': ('title',)}   # auto-fills slug when typing title
+    prepopulated_fields = {'slug': ('title',)}
+    change_list_template = 'admin/affiliate/change_list_with_import.html'
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('import-csv/', self.admin_site.admin_view(self.import_csv), name='affiliate_import_csv'),
+        ]
+        return custom_urls + urls
+
+    def import_csv(self, request):
+        if request.method == 'POST' and request.POST.get('confirm'):
+            rows = request.session.get('import_csv_preview', [])
+            if not rows:
+                messages.error(request, 'No data to import.')
+                return redirect('..')
+            created = 0
+            skipped = 0
+            for row in rows:
+                _, created_flag = TrackedAffiliateLink.objects.get_or_create(
+                    slug=row['slug'],
+                    defaults={
+                        'title': row['title'],
+                        'original_url': row['original_url'],
+                        'merchant': row['merchant'],
+                        'description': row['description'],
+                        'image_url': row['image_url'],
+                        'price': row['price'] or None,
+                    }
+                )
+                if created_flag:
+                    created += 1
+                else:
+                    skipped += 1
+            messages.success(request, f"CSV imported. Created: {created}, Skipped (already existing): {skipped}")
+            del request.session['import_csv_preview']
+            return redirect('..')
+
+        if request.method == 'POST':
+            form = CSVUploadForm(request.POST, request.FILES)
+            if form.is_valid():
+                csv_file = request.FILES['csv_file']
+                reader = csv.DictReader(TextIOWrapper(csv_file.file, encoding='utf-8'))
+                rows = []
+                invalid = 0
+                for row in reader:
+                    slug = row.get('slug', '').strip()
+                    original_url = row.get('original_url', '').strip()
+                    if not slug or not original_url:
+                        invalid += 1
+                        continue
+                    rows.append({
+                        'slug': slug,
+                        'title': row.get('title', '').strip(),
+                        'original_url': original_url,
+                        'merchant': row.get('merchant', 'other').strip().lower(),
+                        'description': row.get('description', '').strip(),
+                        'image_url': row.get('image_url', '').strip(),
+                        'price': row.get('price', '').strip() or None,
+                    })
+                if invalid:
+                    messages.warning(request, f"{invalid} row(s) skipped – missing slug or URL.")
+                request.session['import_csv_preview'] = rows
+                context = dict(
+                    self.admin_site.each_context(request),
+                    title='Import affiliate links from CSV - Preview',
+                    preview_rows=rows,
+                )
+                return render(request, 'admin/affiliate/import_csv.html', context)
+        else:
+            form = CSVUploadForm()
+
+        context = dict(
+            self.admin_site.each_context(request),
+            form=form,
+            title='Import affiliate links from CSV',
+        )
+        return render(request, 'admin/affiliate/import_csv.html', context)
+
 
 @admin.register(AffiliateClick)
 class AffiliateClickAdmin(admin.ModelAdmin):
