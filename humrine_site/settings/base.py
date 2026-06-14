@@ -32,6 +32,14 @@ DEBUG = get_env_variable('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = get_env_variable('ALLOWED_HOSTS', '').split(',')
 
+# Dynamically trust cloudshell.dev in development
+if DEBUG:
+    ALLOWED_HOSTS.append('.cloudshell.dev')
+
+CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS if host]
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS.append('https://*.cloudshell.dev')
+
 # Application definition
 # ... (rest of the file is unchanged)
 

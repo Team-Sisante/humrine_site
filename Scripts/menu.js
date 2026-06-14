@@ -12,6 +12,7 @@ const os = require('os');
 const isWindows = os.platform() === 'win32';
 const { spawn } = require('child_process');
 const cypressInstall = require('./cypress-install');
+const venvPath = path.join(__dirname, '..', 'venv');
 
 // =============================================
 // Load environment variables dynamically
@@ -113,7 +114,8 @@ function runCommand(command, options = {}) {
     const defaultOptions = {
       encoding: 'utf8',
       stdio: 'inherit',
-      ...options
+      ...options,
+      env: { ...process.env, ...options.env }
     };
 
     // Use bash if in Git Bash/MINGW64 environment
@@ -293,16 +295,17 @@ async function executeMenuOption(choice) {
   switch (choice) {
     // ==================== 1. LOCAL DEVELOPMENT ====================
     case '1.1':
-      runCommand("docker stop web-dev");
-      runCommand("docker stop web-test");
+      console.log('DEBUG: ENVIRONMENT:', process.env.ENVIRONMENT, 'SECRET_KEY:', process.env.SECRET_KEY ? 'IS SET' : 'IS NOT SET');
+      // runCommand("docker stop web-dev >/dev/null 2>&1 || true");
+      // runCommand("docker stop web-test >/dev/null 2>&1 || true");
       let localDevCommand = `echo '🚀 Starting local development environment...' && cross-env ENVIRONMENT=development python manage.py runserver 0.0.0.0:8000`;
       runCommand(localDevCommand);
       await pause();
       break;
     case '1.2': {
       const venvPath = path.join(__dirname, '..', 'venv');
-      runCommand("docker stop web-dev");
-      runCommand("docker stop web-test");
+      // runCommand("docker stop web-dev");
+      // runCommand("docker stop web-test");
       console.log('Ensuring development containers are running...');
       
       // Auto-setup venv and dependencies if missing
@@ -1544,7 +1547,7 @@ async function executeMenuOption(choice) {
 
 async function showMenu() {
   while (true) {
-    if (isWindows) { runCommand('cls'); } else { runCommand('clear'); }
+    // if (isWindows) { runCommand('cls'); } else { runCommand('clear'); }
 
     console.log('\x1b[32mHumrine Site Management Menu\x1b[0m');
     console.log('\x1b[32m========================\x1b[0m');
