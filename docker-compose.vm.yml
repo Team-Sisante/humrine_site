@@ -310,6 +310,7 @@ services:
       - "${NGINX_PRODUCTION_HOST_PORT}:${WEB_HOST_PORT}"
     volumes:
       - ./nginx-production.conf:/etc/nginx/nginx.conf:ro
+      - ./templates/offline.html:/var/www/html/offline.html:ro
     depends_on:
       - web-production
     networks:
