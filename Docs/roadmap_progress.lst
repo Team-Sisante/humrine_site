@@ -1,0 +1,16 @@
+<!-- AI ASSISTANT NOTE: Refer to this file and update statuses as tasks are completed. 
+                  : Do not remove this note!
+                  : Also do not remove the history of modifications.
+                  : [HARD RULE] When editing, ALWAYS preserve ALL existing content. Only ADD new entries or UPDATE existing ones. NEVER delete or shorten the history.
+                  : [RULE] Every roadmap document MUST be updated by the engineer after any significant decision, finding, code fix, or task completion to ensure project state transparency.
+                  : [RULE] You should always update these roadmap documents on our decisions, findings, fixes and next tasks after doing the updates/changes/modifications.
+-->
+
+# Humrine Site Infrastructure Roadmap Progress
+# humrine_site/roadmap_progress.lst
+
+PHASE 1: PIPELINE UPGRADE
+[DONE] 1. Pipeline Upgrade: Implement Artifact Promotion pattern (SHA-based Docker tagging, image tag injection).
+
+---
+*Last Updated: 2026-06-15*
