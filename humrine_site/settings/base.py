@@ -141,7 +141,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 INVOLVE_API_KEY = os.environ.get('INVOLVE_API_KEY', '')
 
 # CSRF trusted origins for production
-CSRF_TRUSTED_ORIGINS = [
+CSRF_TRUSTED_ORIGINS += [
     'https://humrine.com',
     'https://www.humrine.com',
     'https://staging.humrine.com',
