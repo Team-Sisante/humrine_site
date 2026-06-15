@@ -41,8 +41,6 @@ if DEBUG:
     CSRF_TRUSTED_ORIGINS.append('https://*.cloudshell.dev')
 
 # Application definition
-# ... (rest of the file is unchanged)
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -136,6 +134,22 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ---- Email / Poste.io configuration ----
+# POSTE_ADMIN_PASSWORD is the single source of truth for the admin
+# mailbox password. Django derives both EMAIL_HOST_PASSWORD (SMTP auth)
+# and POSTE_API_PASSWORD (API auth) from it.
+EMAIL_HOST = get_env_variable('EMAIL_HOST', 'mail-production')
+EMAIL_PORT = int(get_env_variable('EMAIL_PORT', '465'))
+EMAIL_HOST_USER = get_env_variable('EMAIL_HOST_USER', 'admin@aeropace.com')
+POSTE_ADMIN_PASSWORD = get_env_variable('POSTE_ADMIN_PASSWORD')
+EMAIL_HOST_PASSWORD = POSTE_ADMIN_PASSWORD
+EMAIL_USE_SSL = get_env_variable('EMAIL_USE_SSL', 'True').lower() == 'true'
+if EMAIL_USE_SSL:
+    EMAIL_USE_TLS = False
+else:
+    EMAIL_USE_TLS = get_env_variable('EMAIL_USE_TLS', 'False').lower() == 'true'
+DEFAULT_FROM_EMAIL = get_env_variable('DEFAULT_FROM_EMAIL', 'admin@aeropace.com')
 
 # Involve API key
 INVOLVE_API_KEY = os.environ.get('INVOLVE_API_KEY', '')
