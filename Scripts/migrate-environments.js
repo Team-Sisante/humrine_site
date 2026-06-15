@@ -102,6 +102,19 @@ function parseEnv(filePath) {
     return env;
 }
 
+async function ensureEnvironmentExists(repo, environment) {
+    try {
+        console.log(`Ensuring environment "${environment}" exists in ${repo}...`);
+        await apiRequest('PUT', `/repos/${repo}/environments/${environment}`);
+        console.log(`\x1b[32mEnvironment "${environment}" is ready.\x1b[0m`);
+    } catch (e) {
+        // The PUT might fail if the token lacks permissions or the name is invalid.
+        // We still try to continue – the subsequent variable calls will report clearer errors.
+        console.error(`\x1b[33mWarning: Could not create/confirm environment "${environment}": ${e.message}\x1b[0m`);
+        console.error('\x1b[33mIf the environment does not exist, variable uploads will likely fail.\x1b[0m');
+    }
+}
+
 async function migrate() {
     let inputFile = process.argv[2];
     let environment = process.argv[3];
@@ -162,6 +175,9 @@ async function migrate() {
         : 'xmione/badminton_court';
 
     console.log(`\x1b[32mMigrating ${inputFile} to GitHub Environment "${environment}"...\x1b[0m`);
+    
+    // Ensure the environment exists (idempotent)
+    await ensureEnvironmentExists(REPO, environment);
 
     // 1. Read the environment‑specific template to get <?var?> keys
     const templatePath = ENV_TEMPLATE_MAP[environment];

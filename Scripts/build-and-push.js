@@ -115,7 +115,7 @@ execSync(`echo "${TOKEN}" | docker login ghcr.io -u xmione --password-stdin`, { 
 // 3. Build and push with retries
 // ---------------------------------------------------------------------------
 const images = [
-  { dockerfile: 'Dockerfile', tag: 'ghcr.io/xmione/humrine_site-web:latest' }
+  { dockerfile: 'Dockerfile', tag: 'ghcr.io/${GIT_REPO_USERNAME}/humrine_site-web:latest' }
 ];
 
 for (let attempt = 1; attempt <= 3; attempt++) {
