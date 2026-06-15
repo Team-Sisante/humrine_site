@@ -12,6 +12,7 @@ const os = require('os');
 const isWindows = os.platform() === 'win32';
 const { spawn } = require('child_process');
 const cypressInstall = require('./cypress-install');
+const venvPath = path.join(__dirname, '..', 'venv');
 
 // =============================================
 // Load environment variables dynamically
@@ -86,7 +87,6 @@ function runCommand(command, options = {}) {
     let finalCommand = command;
 
     if (needsVenv) {
-      const venvPath = path.join(__dirname, '..', 'venv');
       const isVenvActivated = process.env.VIRTUAL_ENV !== undefined;
 
       if (!isVenvActivated) {
@@ -114,7 +114,8 @@ function runCommand(command, options = {}) {
     const defaultOptions = {
       encoding: 'utf8',
       stdio: 'inherit',
-      ...options
+      ...options,
+      env: { ...process.env, ...options.env }
     };
 
     // Use bash if in Git Bash/MINGW64 environment
@@ -294,24 +295,45 @@ async function executeMenuOption(choice) {
   switch (choice) {
     // ==================== 1. LOCAL DEVELOPMENT ====================
     case '1.1':
-      runCommand("docker stop web-dev");
-      runCommand("docker stop web-test");
-      const localDevParam = await ask('Enter additional parameter for cruise-config.xml (optional): ');
+      console.log('DEBUG: ENVIRONMENT:', process.env.ENVIRONMENT, 'SECRET_KEY:', process.env.SECRET_KEY ? 'IS SET' : 'IS NOT SET');
+      // runCommand("docker stop web-dev >/dev/null 2>&1 || true");
+      // runCommand("docker stop web-test >/dev/null 2>&1 || true");
       let localDevCommand = `echo '🚀 Starting local development environment...' && cross-env ENVIRONMENT=development python manage.py runserver 0.0.0.0:8000`;
-      if (localDevParam) localDevCommand += ` ${localDevParam}`;
       runCommand(localDevCommand);
       await pause();
       break;
-    case '1.2':
-      runCommand("docker stop web-dev");
-      runCommand("docker stop web-test");
+    case '1.2': {
+      const venvPath = path.join(__dirname, '..', 'venv');
+      // runCommand("docker stop web-dev");
+      // runCommand("docker stop web-test");
       console.log('Ensuring development containers are running...');
-      runCommand(`${getDockerCompose()} --env-file .env.docker --env-file .env.common --profile dev up -d db redis mail-test`);
+      
+      // Auto-setup venv and dependencies if missing
+      if (!fs.existsSync(venvPath)) {
+        console.log('\x1b[33m⚠ venv not found. Setting up virtual environment...\x1b[0m');
+        const venvRes = runCommand('python -m venv venv');
+        
+        if (venvRes.success) {
+          let pipCmd = isWindows 
+            ? path.join(venvPath, 'Scripts', 'pip')
+            : path.join(venvPath, 'bin', 'pip');
+          
+          console.log('\x1b[33m⚠ Installing dependencies...\x1b[0m');
+          runCommand(`"${pipCmd}" install -r requirements.txt`);
+        } else {
+          console.error('\x1b[31mFailed to create venv: ' + venvRes.error + '\x1b[0m');
+        }
+      }
+
+      // TODO (Future): Enable these services once defined in docker-compose.yml
+      // runCommand(`${getDockerCompose()} --env-file .env.common --env-file .env.docker --profile dev up -d db redis mail-test`);
+      
       // wait for db healthy (optional, but recommended)
       const localDevDetachedCommand = `echo '🚀 Starting local development environment in detached mode...' && node Scripts/run-detached.js`;
       runCommand(localDevDetachedCommand);
       await pause();
       break;
+    }
     case '1.3':
       runCommand(`echo '🛑 Stopping local dev server development...' && node Scripts/stop-server.js`);
       await pause();
@@ -1258,7 +1280,6 @@ async function executeMenuOption(choice) {
       break;      
     case '13.21':
       console.log('\x1b[36mLaunching shell with venv activated...\x1b[0m');
-      const venvPath = path.join(__dirname, '..', 'venv');
       if (!fs.existsSync(venvPath)) {
         console.log('\x1b[31m✗ Virtual environment not found at: ' + venvPath + '\x1b[0m');
         await pause();
@@ -1280,9 +1301,9 @@ async function executeMenuOption(choice) {
       await pause();
       break;
     case '13.22': {
-      const venvPath = path.join(__dirname, '..', 'venv');
+      const venvPath2 = path.join(__dirname, '..', 'venv');
       let proceed = true;
-      if (fs.existsSync(venvPath)) {
+      if (fs.existsSync(venvPath2)) {
         const confirm = await ask('venv already exists. Overwrite? (y/n): ');
         if (confirm.toLowerCase() !== 'y') {
           proceed = false;
@@ -1290,9 +1311,9 @@ async function executeMenuOption(choice) {
           // Remove old venv
           try {
             if (isWindows) {
-              execSync(`rmdir /s /q "${venvPath}"`);
+              execSync(`rmdir /s /q "${venvPath2}"`);
             } else {
-              execSync(`rm -rf "${venvPath}"`);
+              execSync(`rm -rf "${venvPath2}"`);
             }
           } catch (err) {
             console.error('\x1b[31mFailed to remove existing venv:\x1b[0m', err.message);
@@ -1526,7 +1547,7 @@ async function executeMenuOption(choice) {
 
 async function showMenu() {
   while (true) {
-    if (isWindows) { runCommand('cls'); } else { runCommand('clear'); }
+    // if (isWindows) { runCommand('cls'); } else { runCommand('clear'); }
 
     console.log('\x1b[32mHumrine Site Management Menu\x1b[0m');
     console.log('\x1b[32m========================\x1b[0m');
