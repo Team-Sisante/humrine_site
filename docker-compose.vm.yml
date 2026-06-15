@@ -4,7 +4,7 @@ services:
   # Staging Web Service
   web-staging:
     container_name: humrine-web-staging
-    image: ghcr.io/xmione/humrine_site-web:latest
+    image: ghcr.io/xmione/humrine_site-web:${IMAGE_TAG:-latest}
     restart: unless-stopped
     environment:
       # ====== APPLICATION SETTINGS ======
@@ -162,7 +162,7 @@ services:
   # Production Web Service
   web-production:
     container_name: humrine-web-production
-    image: ghcr.io/xmione/humrine_site-web:latest
+    image: ghcr.io/xmione/humrine_site-web:${IMAGE_TAG:-latest}
     restart: unless-stopped
     environment:
       # ====== APPLICATION SETTINGS ======
