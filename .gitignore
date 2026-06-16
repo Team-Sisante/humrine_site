@@ -36,3 +36,4 @@ nginx-staging.conf
 nginx-production.conf
 humrine_site/__pycache__/
 humrine_site/settings/__pycache__/
+build-info/
