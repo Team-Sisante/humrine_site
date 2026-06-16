@@ -1549,8 +1549,9 @@ async function showMenu() {
   while (true) {
     // if (isWindows) { runCommand('cls'); } else { runCommand('clear'); }
 
+    console.log('\x1b[32m============================\x1b[0m');
     console.log('\x1b[32mHumrine Site Management Menu\x1b[0m');
-    console.log('\x1b[32m========================\x1b[0m');
+    console.log('\x1b[32m============================\x1b[0m');
     console.log('');
     console.log('\x1b[36m1. LOCAL DEVELOPMENT\x1b[0m');
     console.log('   1.1. Start local dev');
@@ -1736,7 +1737,11 @@ async function showMenu() {
     console.log('   20.1. Full Docker system reset (⚠ DESTROYS everything)');
     console.log('');     
     console.log('\x1b[30m0. Exit\x1b[0m');
-
+  
+    console.log('\x1b[32m============================\x1b[0m');
+    console.log('\x1b[32mHumrine Site Management Menu\x1b[0m');
+    console.log('\x1b[32m============================\x1b[0m');
+  
     const choice = await ask('Select option: ');
     try {
       await executeMenuOption(choice);
