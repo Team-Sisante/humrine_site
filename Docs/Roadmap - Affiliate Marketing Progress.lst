@@ -31,10 +31,8 @@ PHASE 3: INVOLVE ASIA INTEGRATION (OPTIONAL)
 [DONE] 3.1 – Register Involve Asia publisher account.
        - Account created, property Humrine.com approved.
        - Applied to Shopee PH (auto-approved) and Lazada Talent (PH) (pending).
-[BLOCKED] 3.2 – Implement Involve API client with caching.
-         - API service module written (`affiliate/involve_api.py`).
-         - API key not available in dashboard; request submitted to Involve, under review (up to 48 working hours).
-[PENDING] 3.3 – Build dynamic product catalogue view (if needed).
+[DONE] 3.2 – API key received and configured.
+[DONE] 3.3 – Dynamic product catalogue view (/dynamic-deals/) created.
 [PENDING] 3.4 – Add fallback/error handling for API.
 
 PHASE 4: ANALYTICS DASHBOARD & REPORTING

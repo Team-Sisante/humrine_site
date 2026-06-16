@@ -6,12 +6,12 @@ from datetime import date, datetime, timedelta
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Count, Q
 from django.db.models.functions import TruncDate
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseNotFound
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import ListView
 
 from .models import TrackedAffiliateLink, AffiliateClick
-
+from .involve_api import InvolveAPI
 
 def affiliate_redirect(request, slug):
     link = get_object_or_404(TrackedAffiliateLink, slug=slug)
@@ -25,7 +25,6 @@ def affiliate_redirect(request, slug):
     )
 
     return redirect(link.original_url)
-
 
 @staff_member_required
 def affiliate_stats(request):
@@ -69,8 +68,8 @@ def affiliate_stats(request):
         for click in clicks_in_range.select_related('link'):
             writer.writerow([
                 click.clicked_at.strftime('%Y-%m-%d %H:%M'),
-                click.link.title or click.link.slug,
-                click.link.merchant,
+                click.link.title if click.link else 'Dynamic',
+                click.link.merchant if click.link else '',
                 click.ip_address,
                 click.user_agent,
                 click.referer,
@@ -87,8 +86,33 @@ def affiliate_stats(request):
     }
     return render(request, 'affiliate/stats.html', context)
 
-
 class DealListView(ListView):
     model = TrackedAffiliateLink
     template_name = 'affiliate/deal_list.html'
     context_object_name = 'links'
+
+def affiliate_involve_redirect(request, offer_id):
+    try:
+        result = InvolveAPI.generate_deep_link(offer_id)
+        deep_link = result.get('data', {}).get('deep_link')
+        if not deep_link:
+            return HttpResponseNotFound("Deep link not available")
+    except Exception:
+        return HttpResponseNotFound("Failed to retrieve link")
+
+    AffiliateClick.objects.create(
+        link=None,
+        user=request.user if request.user.is_authenticated else None,
+        ip_address=request.META.get('REMOTE_ADDR'),
+        user_agent=request.META.get('HTTP_USER_AGENT', ''),
+        referer=request.META.get('HTTP_REFERER', ''),
+    )
+    return redirect(deep_link)
+
+def dynamic_deals(request):
+    try:
+        offers_response = InvolveAPI.get_offers(limit=20, page=1)
+        offers = offers_response.get('data', [])
+    except Exception:
+        offers = []
+    return render(request, 'affiliate/dynamic_deals.html', {'offers': offers})
