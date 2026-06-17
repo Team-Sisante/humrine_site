@@ -35,10 +35,9 @@ RUN chmod +x /app/badminton_court_linux
 ENV MPLCONFIGDIR=/app/.matplotlib
 RUN mkdir -p /app/.matplotlib
 
-# --- INSERT THIS LINE ---
+# Ensure persistent data directory exists with correct ownership
 RUN mkdir -p /app/data && chown appuser:appuser /app/data
-# ------------------------
-    
+
 # Set environment variables for CA certificates
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
