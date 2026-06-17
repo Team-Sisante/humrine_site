@@ -823,6 +823,29 @@ async function executeMenuOption(choice) {
       runCommand(`echo '💾 Saving running containers to Docker Hub...' && node Scripts/saveToDockerHub.js`);
       await pause();
       break;
+    case '12.9':
+      // Backup database (Django dumpdata)
+      runCommand(`echo '📦 Backing up database to JSON fixture...' && python manage.py backup_db`);
+      await pause();
+      break;
+    case '12.10': {
+      // Restore database from a JSON fixture backup
+      const filename = await ask('Enter backup filename (e.g., db_backup_20260617_120000.json): ');
+      if (!filename) {
+        console.log('\x1b[31mNo filename entered. Aborting.\x1b[0m');
+        await pause();
+        break;
+      }
+      const confirmRestore = await ask(`This will WIPE the current database and replace it with ${filename}. Continue? (y/N): `);
+      if (confirmRestore.toLowerCase() !== 'y') {
+        console.log('Restore cancelled.');
+        await pause();
+        break;
+      }
+      runCommand(`python manage.py restore_db ${filename} --yes`);
+      await pause();
+      break;
+    }
 
     // ==================== 13. UTILITIES ====================
     case '13.1':
@@ -1657,6 +1680,8 @@ async function showMenu() {
     console.log('   12.6. List backup contents');
     console.log('   12.7. List backup image names');
     console.log('   12.8. Save containers to Docker Hub');
+    console.log('   12.9. Backup database (dumpdata)');
+    console.log('   12.10. Restore database from backup');
     console.log('');
     console.log('\x1b[36m13. UTILITIES\x1b[0m');
     console.log('   13.1. Create SSL certs');
