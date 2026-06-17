@@ -1,0 +1,12 @@
+| Section | Purpose |
+|---------|---------|
+| 1–9 | Force LF for all Linux/Docker-bound text files (shell scripts, Dockerfiles, Python, JS, configs, CI/CD) |
+| 10 | Force CRLF for Windows-only scripts (so they work on Windows hosts) |
+| 11 | Mark binary assets (images, fonts, videos, archives, DB dumps, Python bytecode) as `binary` — Git won't touch line endings, won't show useless diffs |
+| 12 | Mark PyInstaller build artifacts as binary (critical — corrupted binaries = broken containers) |
+| 13 | Use proper diff/merge helpers per language (cleaner PRs); Django migrations use `merge=ours` (never auto-merge — migrations must be sequential) |
+| 14 | Exclude dev-only files from release tarballs |
+| 15 | Optional Git LFS rules (commented out — enable if you use LFS) |
+| 16 | Linguist overrides (so GitHub shows accurate language stats — vendored libs and docs don't inflate the language bar) |
+| 17 | Auto-strip trailing whitespace on commit (except for Markdown, which uses trailing spaces for line breaks) |
+

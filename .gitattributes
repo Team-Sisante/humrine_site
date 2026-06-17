@@ -1,0 +1,332 @@
+# =============================================================================
+# .gitattributes — Django Web Application
+# =============================================================================
+
+# -------------------------------------------------------------
+# 1. SHELL SCRIPTS & ENTRYPOINTS  (force LF — critical for Docker)
+# -------------------------------------------------------------
+*.sh            text eol=lf
+*.bash          text eol=lf
+*.zsh           text eol=lf
+*.env.sh        text eol=lf
+entrypoint*     text eol=lf
+*.entrypoint    text eol=lf
+docker-entrypoint* text eol=lf
+
+# -------------------------------------------------------------
+# 2. DOCKERFILES & COMPOSE (force LF)
+# -------------------------------------------------------------
+Dockerfile*     text eol=lf
+docker-compose*.yml   text eol=lf
+docker-compose*.yaml  text eol=lf
+*.dockerfile    text eol=lf
+.dockerignore   text eol=lf
+
+# -------------------------------------------------------------
+# 3. NGINX / WEB SERVER CONFIG (force LF)
+# -------------------------------------------------------------
+*.conf          text eol=lf
+nginx*.conf*    text eol=lf
+*.nginx         text eol=lf
+*.htaccess      text eol=lf
+
+# -------------------------------------------------------------
+# 4. ENVIRONMENT & TEMPLATE FILES (force LF)
+# -------------------------------------------------------------
+.env*           text eol=lf
+*.template      text eol=lf
+*.env.template  text eol=lf
+*.ini           text eol=lf
+*.cfg           text eol=lf
+*.toml          text eol=lf
+
+# -------------------------------------------------------------
+# 5. PYTHON / DJANGO SOURCE CODE (force LF)
+# -------------------------------------------------------------
+*.py            text eol=lf
+*.pyi           text eol=lf
+*.pyx           text eol=lf
+*.pyd           text eol=lf
+*.wsgi          text eol=lf
+*.asgi          text eol=lf
+manage.py       text eol=lf
+conftest.py     text eol=lf
+__init__.py     text eol=lf
+settings*.py    text eol=lf
+urls*.py        text eol=lf
+wsgi.py         text eol=lf
+asgi.py         text eol=lf
+celery.py       text eol=lf
+
+# Python requirements files
+requirements*.txt  text eol=lf
+Pipfile*        text eol=lf
+pyproject.toml  text eol=lf
+setup.py        text eol=lf
+setup.cfg       text eol=lf
+poetry.lock     text eol=lf
+Pipfile.lock    text eol=lf
+
+# -------------------------------------------------------------
+# 6. FRONTEND ASSETS (force LF)
+# -------------------------------------------------------------
+# JavaScript / TypeScript
+*.js            text eol=lf
+*.jsx           text eol=lf
+*.ts            text eol=lf
+*.tsx           text eol=lf
+*.mjs           text eol=lf
+*.cjs           text eol=lf
+*.json          text eol=lf
+*.json5         text eol=lf
+*.jsonc         text eol=lf
+
+# Stylesheets
+*.css           text eol=lf
+*.scss          text eol=lf
+*.sass          text eol=lf
+*.less          text eol=lf
+*.styl          text eol=lf
+
+# HTML / Templates
+*.html          text eol=lf
+*.htm           text eol=lf
+*.xhtml         text eol=lf
+*.jinja         text eol=lf
+*.jinja2        text eol=lf
+*.j2            text eol=lf
+*.djt           text eol=lf
+*.tpl           text eol=lf
+*.twig          text eol=lf
+
+# Vue / Svelte / Astro
+*.vue           text eol=lf
+*.svelte        text eol=lf
+*.astro         text eol=lf
+
+# -------------------------------------------------------------
+# 7. MARKUP & DOCS (force LF)
+# -------------------------------------------------------------
+*.md            text eol=lf
+*.markdown      text eol=lf
+*.rst           text eol=lf
+*.txt           text eol=lf
+*.mdx           text eol=lf
+
+# -------------------------------------------------------------
+# 8. CONFIG & METADATA (force LF)
+# -------------------------------------------------------------
+*.yml           text eol=lf
+*.yaml          text eol=lf
+.editorconfig   text eol=lf
+.gitattributes  text eol=lf
+.gitignore      text eol=lf
+.gitmodules     text eol=lf
+*.editorconfig  text eol=lf
+*.csv           text eol=lf
+*.tsv           text eol=lf
+
+# Lock files
+package-lock.json   text eol=lf
+yarn.lock           text eol=lf
+pnpm-lock.yaml      text eol=lf
+bun.lockb           binary
+composer.lock       text eol=lf
+
+# -------------------------------------------------------------
+# 9. CI/CD PIPELINE CONFIG (force LF)
+# -------------------------------------------------------------
+.gitlab-ci.yml      text eol=lf
+.github/workflows/* text eol=lf
+.circleci/config.yml text eol=lf
+Jenkinsfile         text eol=lf
+azure-pipelines.yml text eol=lf
+bitbucket-pipelines.yml text eol=lf
+.drone.yml          text eol=lf
+
+# -------------------------------------------------------------
+# 10. WINDOWS-ONLY SCRIPTS (force CRLF — these run on Windows)
+# -------------------------------------------------------------
+*.bat           text eol=crlf
+*.cmd           text eol=crlf
+*.ps1           text eol=crlf
+*.psm1          text eol=crlf
+*.psd1          text eol=crlf
+*.vbs           text eol=crlf
+
+# -------------------------------------------------------------
+# 11. BINARY ASSETS — never normalize, never diff as text
+# -------------------------------------------------------------
+
+# Images
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.gif           binary
+*.bmp           binary
+*.ico           binary
+*.icns          binary
+*.tif           binary
+*.tiff          binary
+*.webp          binary
+*.avif          binary
+*.heic          binary
+# SVG is text/XML, force LF (not binary)
+*.svg           text eol=lf
+
+# Fonts
+*.woff          binary
+*.woff2         binary
+*.ttf           binary
+*.otf           binary
+*.eot           binary
+
+# Audio / Video
+*.mp3           binary
+*.wav           binary
+*.flac          binary
+*.ogg           binary
+*.mp4           binary
+*.webm          binary
+*.mov           binary
+*.avi           binary
+*.mkv           binary
+
+# Documents (binary)
+*.pdf           binary
+*.docx          binary
+*.xlsx          binary
+*.pptx          binary
+
+# Archives & compressed
+*.zip           binary
+*.tar           binary
+*.gz            binary
+*.tgz           binary
+*.bz2           binary
+*.xz            binary
+*.7z            binary
+*.rar           binary
+
+# Database / data dumps
+*.sqlite        binary
+*.sqlite3       binary
+*.db            binary
+*.psql          binary
+*.dump          binary
+
+# Python compiled / packaging artifacts
+*.pyc           binary
+*.pyo           binary
+*.pyd           binary
+*.egg           binary
+*.egg-info      binary
+*.whl           binary
+*.so            binary
+*.dll           binary
+*.dylib         binary
+
+# Compiled binaries
+*.exe           binary
+*.bin           binary
+*.elf           binary
+
+# -------------------------------------------------------------
+# 12. PYINSTALLER / DJANGO BINARY BUILD ARTIFACTS
+# (mark as binary so they're never corrupted by line-ending normalization)
+# -------------------------------------------------------------
+dist_linux/     binary
+dist_linux/*    binary
+dist/           binary
+dist/*          binary
+build/          binary
+build/*         binary
+# PyInstaller spec files are Python — text
+*.spec          text eol=lf
+
+# -------------------------------------------------------------
+# 13. DIFF & MERGE HELPERS (cleaner PRs)
+# -------------------------------------------------------------
+
+# Show word diffs for these text formats
+*.md            diff=markdown
+*.py            diff=python
+*.js            diff=javascript
+*.ts            diff=javascript
+*.jsx           diff=javascript
+*.tsx           diff=javascript
+*.css           diff=css
+*.scss          diff=css
+*.html          diff=html
+*.json          diff=json
+
+# Django migration files — never auto-merge (migrations must be sequential)
+*/migrations/*.py merge=ours
+
+# Lock files — always accept theirs on merge (avoids drift)
+package-lock.json merge=theirs
+yarn.lock       merge=theirs
+pnpm-lock.yaml  merge=theirs
+poetry.lock     merge=theirs
+Pipfile.lock    merge=theirs
+
+# -------------------------------------------------------------
+# 14. EXPORT IGNORE (don't include in GitHub release tarballs)
+# -------------------------------------------------------------
+.gitattributes  export-ignore
+.gitignore      export-ignore
+.gitlab-ci.yml  export-ignore
+.github         export-ignore
+tests/          export-ignore
+docs/           export-ignore
+*.md            export-ignore
+*.rst           export-ignore
+
+# -------------------------------------------------------------
+# 15. GIT LFS (Large File Storage) — OPTIONAL
+# Uncomment if your repo has Git LFS enabled and you want to track
+# large binary assets via LFS instead of regular Git blobs.
+# -------------------------------------------------------------
+# *.psd           filter=lfs diff=lfs merge=lfs -text
+# *.ai            filter=lfs diff=lfs merge=lfs -text
+# *.sketch        filter=lfs diff=lfs merge=lfs -text
+# *.fig           filter=lfs diff=lfs merge=lfs -text
+# *.mp4           filter=lfs diff=lfs merge=lfs -text
+# *.mov           filter=lfs diff=lfs merge=lfs -text
+# *.sqlite3       filter=lfs diff=lfs merge=lfs -text
+# *.db            filter=lfs diff=lfs merge=lfs -text
+# dist_linux/*    filter=lfs diff=lfs merge=lfs -text
+# dist/*          filter=lfs diff=lfs merge=lfs -text
+
+# -------------------------------------------------------------
+# 16. LINGUIST (GitHub language detection — optional, for accurate
+# language stats on your repo's homepage)
+# -------------------------------------------------------------
+static/*        linguist-vendored
+static/**/*     linguist-vendored
+vendor/*        linguist-vendored
+vendor/**/*     linguist-vendored
+*.min.js        linguist-vendored
+*.min.css       linguist-vendored
+docs/*          linguist-documentation
+docs/**/*       linguist-documentation
+*.md            linguist-documentation=true
+
+# -------------------------------------------------------------
+# 17. WHITESPACE CLEANUP (optional, but recommended)
+# Git will strip trailing whitespace on commit for these file types.
+# Remove this section if you don't want auto-whitespace-cleanup.
+# -------------------------------------------------------------
+*.py            whitespace=trailing-space,space-before-tab,tab-in-indent
+*.js            whitespace=trailing-space,space-before-tab,tab-in-indent
+*.ts            whitespace=trailing-space,space-before-tab,tab-in-indent
+*.css           whitespace=trailing-space,space-before-tab,tab-in-indent
+*.scss          whitespace=trailing-space,space-before-tab,tab-in-indent
+*.html          whitespace=trailing-space,space-before-tab,tab-in-indent
+# Markdown uses trailing spaces for line breaks — don't strip them
+*.md            whitespace=-trailing-space
+*.sh            whitespace=trailing-space,space-before-tab,tab-in-indent
+
+# =============================================================================
+# END
+# =============================================================================
