@@ -139,7 +139,7 @@ services:
       - ENC_PASSPHRASE=${ENC_PASSPHRASE}
       - DB_PATH=/app/data/db.sqlite3
     volumes:
-      - ./data:/app/data
+      - db_data:/app/data
     networks:
       - humrine-network
     profiles:
@@ -300,7 +300,7 @@ services:
       - ENC_PASSPHRASE=${ENC_PASSPHRASE}
       - DB_PATH=/app/data/db.sqlite3
     volumes:
-      - ./data:/app/data
+      - db_data:/app/data
     networks:
       - humrine-network
     profiles:
@@ -328,3 +328,6 @@ networks:
     driver: bridge
     driver_opts:
       com.docker.network.driver.mtu: 1460
+
+volumes:
+  db_data:
