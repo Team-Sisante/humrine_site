@@ -137,10 +137,13 @@ services:
       - STAGING_APP_URL=${STAGING_APP_URL}
       - GCP_SA_KEY_PATH=${GCP_SA_KEY_PATH}
       - ENC_PASSPHRASE=${ENC_PASSPHRASE}
+      - DB_PATH=/app/data/db.sqlite3
     networks:
       - humrine-network
     profiles:
       - staging
+    volumes:
+      - ./data:/app/data
 
   # Staging Nginx (HTTPS Proxy)
   nginx-staging:
@@ -294,10 +297,13 @@ services:
       - PRODUCTION_APP_URL=${PRODUCTION_APP_URL}
       - GCP_SA_KEY_PATH=${GCP_SA_KEY_PATH}
       - ENC_PASSPHRASE=${ENC_PASSPHRASE}
+      - DB_PATH=/app/data/db.sqlite3
     networks:
       - humrine-network
     profiles:
       - production
+    volumes:
+      - ./data:/app/data
 
   # Production Nginx (HTTPS Proxy)
   nginx-production:
