@@ -9,38 +9,68 @@
     <h1 class="mb-4">🔥 Live Deals</h1>
     <p class="lead">Fresh picks from our partners. Click to explore – we may earn a commission at no extra cost to you.</p>
 
-    <div class="row mt-4">
-        {% for offer in offers %}
-            {% with image=offer.image_url title=offer.name description=offer.description price=offer.price offer_id=offer.id %}
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 shadow-sm">
-                    {% if image %}
-                        <img src="{{ image }}" class="card-img-top" alt="{{ title }}">
-                    {% endif %}
-                    <div class="card-body">
-                        <h5 class="card-title">{{ title }}</h5>
-                        {% if description %}
-                            <p class="card-text">{{ description|truncatechars:100 }}</p>
+    {% if offers %}
+        <div class="row mt-4">
+            {% for offer in offers %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        {% if offer.image_url %}
+                            <img src="{{ offer.image_url }}" class="card-img-top" alt="{{ offer.name }}">
                         {% endif %}
-                        {% if price %}
-                            <p class="card-text fw-bold">{{ price }}</p>
-                        {% endif %}
-                    </div>
-                    <div class="card-footer bg-white border-0">
-                        <a href="{% url 'affiliate_involve_redirect' offer_id=offer_id %}" 
-                           class="btn btn-primary" rel="nofollow sponsored" target="_blank">
-                            View Deal
-                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ offer.name }}</h5>
+                            {% if offer.description %}
+                                <p class="card-text">{{ offer.description|truncatechars:100 }}</p>
+                            {% endif %}
+                            {% if offer.price %}
+                                <p class="card-text fw-bold">{{ offer.price }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer bg-white border-0">
+                            <a href="{% url 'affiliate_involve_redirect' offer_id=offer.id %}" 
+                               class="btn btn-primary" rel="nofollow sponsored" target="_blank">
+                                View Deal
+                            </a>
+                        </div>
                     </div>
                 </div>
-            </div>
-            {% endwith %}
-        {% empty %}
-            <div class="col-12">
-                <p class="text-muted">No live deals available right now. Check back soon!</p>
-            </div>
-        {% endfor %}
-    </div>
+            {% endfor %}
+        </div>
+    {% elif fallback_links %}
+        <div class="alert alert-warning small">
+            Live offers are temporarily unavailable. Showing our curated picks instead.
+        </div>
+        <div class="row mt-4">
+            {% for link in fallback_links %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        {% if link.image_url %}
+                            <img src="{{ link.image_url }}" class="card-img-top" alt="{{ link.title }}">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ link.title }}</h5>
+                            {% if link.description %}
+                                <p class="card-text">{{ link.description }}</p>
+                            {% endif %}
+                            {% if link.price %}
+                                <p class="card-text fw-bold">₱{{ link.price }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer bg-white border-0">
+                            <a href="{% affiliate_url link.slug %}" class="btn btn-primary" rel="nofollow sponsored" target="_blank">
+                                View on {{ link.merchant|title }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <p class="text-muted">No deals available right now. Check back soon!</p>
+            <a href="{% url 'deals' %}" class="btn btn-primary">Browse Curated Deals</a>
+        </div>
+    {% endif %}
 
     <div class="alert alert-light border text-muted small mt-4" role="alert">
         <strong>Disclosure:</strong> Some links on this page are affiliate links.

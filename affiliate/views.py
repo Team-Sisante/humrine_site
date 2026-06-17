@@ -1,5 +1,6 @@
 # affiliate/views.py
 
+# affiliate/views.py (complete file, updated dynamic_deals)
 import csv
 from datetime import date, datetime, timedelta
 
@@ -121,9 +122,22 @@ def affiliate_involve_redirect(request, offer_id):
 
 
 def dynamic_deals(request):
+    offers = []
+    api_failed = False
     try:
         offers_response = InvolveAPI.get_offers(limit=20, page=1)
         offers = offers_response.get('data', [])
     except Exception:
-        offers = []
-    return render(request, 'affiliate/dynamic_deals.html', {'offers': offers})
+        api_failed = True
+
+    # If no offers from API (or API failed), fall back to database links
+    fallback_links = []
+    if not offers:
+        fallback_links = TrackedAffiliateLink.objects.exclude(image_url='').order_by('-created_at')[:20]
+
+    context = {
+        'offers': offers,
+        'api_failed': api_failed,
+        'fallback_links': fallback_links,
+    }
+    return render(request, 'affiliate/dynamic_deals.html', context)
