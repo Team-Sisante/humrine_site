@@ -28,6 +28,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            padding-top: 50px; /* make space for fixed banner */
         }
 
         .navbar {
@@ -121,6 +122,18 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+
+    <!-- Cookie consent banner -->
+    <div id="cookie-banner" style="display:none; background:#2d3436; color:white; padding:10px 0; position:fixed; top:0; width:100%; z-index:9999;">
+        <div class="container d-flex justify-content-between align-items-center">
+            <span class="small">
+                We use cookies and similar technologies to track clicks on affiliate links and improve your experience. 
+                By continuing to browse, you agree to our <a href="{% url 'privacy_policy' %}" class="text-white text-decoration-underline">Privacy Policy</a>.
+            </span>
+            <button id="cookie-accept" class="btn btn-sm btn-light">Got it</button>
+        </div>
+    </div>
+
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="/">HUMRINE</a>
@@ -169,6 +182,18 @@
     </footer>
 
     {% bootstrap_javascript %}
+    <script>
+    (function(){
+        var banner = document.getElementById('cookie-banner');
+        if (!localStorage.getItem('cookie-consent')) {
+            banner.style.display = 'block';
+            document.getElementById('cookie-accept').addEventListener('click', function(){
+                localStorage.setItem('cookie-consent', '1');
+                banner.style.display = 'none';
+            });
+        }
+    })();
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

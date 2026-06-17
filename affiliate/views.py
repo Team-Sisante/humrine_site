@@ -13,18 +13,23 @@ from django.views.generic import ListView
 from .models import TrackedAffiliateLink, AffiliateClick
 from .involve_api import InvolveAPI
 
+
 def affiliate_redirect(request, slug):
     link = get_object_or_404(TrackedAffiliateLink, slug=slug)
+
+    raw_ip = request.META.get('REMOTE_ADDR')
+    anon_ip = '.'.join(raw_ip.split('.')[:3]) + '.0' if raw_ip else None
 
     AffiliateClick.objects.create(
         link=link,
         user=request.user if request.user.is_authenticated else None,
-        ip_address=request.META.get('REMOTE_ADDR'),
+        ip_address=anon_ip,
         user_agent=request.META.get('HTTP_USER_AGENT', ''),
         referer=request.META.get('HTTP_REFERER', ''),
     )
 
     return redirect(link.original_url)
+
 
 @staff_member_required
 def affiliate_stats(request):
@@ -86,10 +91,12 @@ def affiliate_stats(request):
     }
     return render(request, 'affiliate/stats.html', context)
 
+
 class DealListView(ListView):
     model = TrackedAffiliateLink
     template_name = 'affiliate/deal_list.html'
     context_object_name = 'links'
+
 
 def affiliate_involve_redirect(request, offer_id):
     try:
@@ -100,14 +107,18 @@ def affiliate_involve_redirect(request, offer_id):
     except Exception:
         return HttpResponseNotFound("Failed to retrieve link")
 
+    raw_ip = request.META.get('REMOTE_ADDR')
+    anon_ip = '.'.join(raw_ip.split('.')[:3]) + '.0' if raw_ip else None
+
     AffiliateClick.objects.create(
         link=None,
         user=request.user if request.user.is_authenticated else None,
-        ip_address=request.META.get('REMOTE_ADDR'),
+        ip_address=anon_ip,
         user_agent=request.META.get('HTTP_USER_AGENT', ''),
         referer=request.META.get('HTTP_REFERER', ''),
     )
     return redirect(deep_link)
+
 
 def dynamic_deals(request):
     try:
