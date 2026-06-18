@@ -34,91 +34,147 @@ b1b1496 (oldest) → fd179cf → 6350078 → 95ba7e0 → 14609ec → 866c137 (ne
 
 ### Procedure
 
-1. **Create a new working branch (optional but recommended)**
+1. **Create a new working branch (recommended)**
 
    ```bash
    git checkout -b apply-good-commits
    ```
 
-2. **Cherry‑pick the first (oldest) commit**
+2. **Cherry‑pick the commit – choose your method**
+
+   **Option A – Commit immediately (default)**
 
    ```bash
    git cherry-pick b1b1496
    ```
 
-3. **Resolve conflicts (if any)**
+   - The change is **automatically committed**.
+   - You’ll see no uncommitted files; in VS Code this often shows a “Sync (1)” button (one new commit ready to push).
+   - Go to step 4 to review the commit.
 
-   If Git reports a conflict:
+   **Option B – Stage but don’t commit (recommended for review)**
+
+   ```bash
+   git cherry-pick --no-commit b1b1496
+   ```
+
+   - The changes are applied to your working directory and **staged**, but no commit is created.
+   - You can inspect, modify, or test before committing.
+
+3. **Review the changes (depending on your option)**
+
+   - **If you used Option B (staged changes)**, view the staged modifications:
+
+     ```bash
+     git status
+     git diff --cached
+     ```
+
+     When you’re ready, commit them:
+
+     ```bash
+     git commit -m "feat: implement database backup and restore functionality in admin panel"
+     ```
+
+   - **If you used Option A (already committed)**, view the last commit:
+
+     ```bash
+     git show
+     # or
+     git diff --name-only HEAD~1
+     ```
+
+4. **Resolve conflicts (only if Git reports a conflict)**
+
+   If Git outputs a conflict message (this can happen with either option):
 
    - Edit the conflicting files to resolve the issue.
    - Stage the resolved files: `git add <file>`
-   - Continue: `git cherry-pick --continue`
+   - Continue the cherry‑pick:
 
-4. **Test the application**
+     ```bash
+     git cherry-pick --continue   # for Option A
+     # or, if you used Option B, resolve and then commit manually:
+     git add <resolved-files>
+     git commit -m "your message"
+     ```
+
+5. **Test the application**
 
    - Run your development server, tests, or manually verify the feature.
    - Check that the changes introduced by this commit work correctly.
 
-5. **If something is broken, fix it now**
+6. **If something is broken, fix it now**
 
    Make the necessary corrections in the code.
 
    - Stage the corrections: `git add .`
-   - Amend the cherry‑picked commit (keeping its original message):
+   - Amend the cherry‑picked commit (if already committed) or include them in your manual commit:
 
      ```bash
+     # If you used Option A and already committed:
      git commit --amend --no-edit
+
+     # If you used Option B and haven't committed yet:
+     git commit -m "your message"
      ```
 
-   This integrates your fix into the current commit, so the final history stays clean.
+   This keeps the history clean and the commit correct.
 
-6. **Confirm the commit and proceed to the next one**
+7. **Proceed to the next commit**
 
    ```bash
    git log -1   # verify the current state
-   git cherry-pick <next-commit-hash>
+   git cherry-pick (or git cherry-pick --no-commit) <next-commit-hash>
    ```
 
-   Repeat steps 3‑5 for each remaining commit.
+   Repeat steps 2‑6 for each remaining commit.
 
-7. **Final verification**
+8. **Push the branch and create a pull request (PR)**
 
-   After the last commit is applied and tested, run a full regression check to ensure everything works together.
-
-8. **Merge back (if needed)**
-
-   Once satisfied, merge the branch into your main working branch:
+   Once all commits have been applied and tested, push your branch to the remote repository:
 
    ```bash
-   git checkout main
-   git merge apply-good-commits
+   git push -u origin apply-good-commits
    ```
 
-### Example session
+   Then create a pull request against `master` (or your target branch). Use a clear title and description, summarizing what was restored and why.
+
+   After the PR is reviewed, merge it into the target branch.
+
+9. **Final verification**
+
+   After merging, pull the latest changes locally and run a full regression check to ensure everything works together.
+
+### Example session (using Option B)
 
 ```bash
 git checkout -b apply-good-commits
-git cherry-pick b1b1496      # backup/restore feature
+git cherry-pick --no-commit b1b1496
+git diff --cached          # review changes
+git commit -m "feat: implement database backup and restore functionality in admin panel"
 # test … OK
-git cherry-pick fd179cf      # volume adjustments
-# conflict: resolve, git add, git cherry-pick --continue
+
+git cherry-pick --no-commit fd179cf
+# conflict: resolve, git add, git commit -m "fix: adjust volume definitions..."
 # test … OK
-git cherry-pick 6350078      # data directory creation
+
+git cherry-pick --no-commit 6350078
 # test … fails (permission denied)
-# fix code, git add, git commit --amend --no-edit
-git cherry-pick 95ba7e0      # ownership fix
+# fix code, git add, git commit -m "feat: add data directory creation"
 # test … OK
-git cherry-pick 14609ec      # admin backup/restore
-# test … OK
-git cherry-pick 866c137      # startup repair (if needed)
-# test … OK
+
+# … continue with remaining commits
+
+git push -u origin apply-good-commits
+# create pull request on GitHub
 ```
 
 ### Benefits
 
 - **Safety** – you catch errors immediately, not days later.
 - **Clean history** – each commit remains atomic and correct.
-- **Flexibility** – you can easily skip a commit that turns out to be harmful.
+- **Flexibility** – you can easily skip a commit or decide not to commit yet.
 
 ### When to use this technique
 
