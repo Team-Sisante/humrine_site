@@ -1412,25 +1412,15 @@ async function executeMenuOption(choice) {
       remoteDockerComposeUp('nginx-staging', '.env.staging', 'badminton-staging', 'staging');
       await pause();
       break;
-    case '16.6':
-      const vmIpStaging = process.env.GCP_VM_IP;
-      const sshUserStaging = process.env.VM_SSH_USER;
-      const sshKeyStaging = path.resolve(__dirname, '..', '..', 'gocd-server', 'secrets', 'agent-key');
-      // FIX: Use explicit docker-compose command on remote Linux VM and literal filename
-      const remoteCmdStaging = [
-        `cd /opt/badminton_court`,
-        `sudo docker compose -p badminton-staging -f docker-compose.vm.yml --env-file .env.staging --profile staging up -d --force-recreate --remove-orphans`
-      ].join(' && ');
-      const sshCmdStaging = `ssh -i "${sshKeyStaging}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${sshUserStaging}@${vmIpStaging} "${remoteCmdStaging}"`;
-      console.log(`\x1b[36mRestarting all staging containers...\x1b[0m`);
-      try {
-        execSync(sshCmdStaging, { stdio: 'inherit' });
-        console.log(`\x1b[32mAll staging containers started successfully.\x1b[0m`);
-      } catch (err) {
-        console.error(`\x1b[31mFailed to start staging containers: ${err.message}\x1b[0m`);
-      }
+    case '16.6': {
+      // Interactive env loading, then docker compose
+      const evalCmd = `eval $(node "${path.join(__dirname, 'load-vm-env.js')}") && ` +
+                      `docker compose -p humrine-staging -f docker-compose.vm.yml --profile staging up -d`;
+      console.log('\x1b[36mLoading secrets and starting humrine_site staging containers…\x1b[0m');
+      runCommand(evalCmd);
       await pause();
       break;
+    }
 
     // ==================== 17. PRODUCTION CONTAINERS ====================
     case '17.1':
