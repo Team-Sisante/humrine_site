@@ -137,19 +137,10 @@ services:
       - STAGING_APP_URL=${STAGING_APP_URL}
       - GCP_SA_KEY_PATH=${GCP_SA_KEY_PATH}
       - ENC_PASSPHRASE=${ENC_PASSPHRASE}
-      - DB_PATH=/app/data/db.sqlite3
-    volumes:
-      - db_data:/app/data
     networks:
       - humrine-network
     profiles:
       - staging
-    # ---- Startup repair: fix volume ownership, then start app ----
-    command: >
-      sh -c "
-        chown -R appuser:appuser /app/data &&
-        exec /usr/local/bin/setup-binary.sh runserver --noreload 0.0.0.0:8000
-      "
 
   # Staging Nginx (HTTPS Proxy)
   nginx-staging:
@@ -160,7 +151,6 @@ services:
       - "${NGINX_STAGING_HOST_PORT}:${WEB_HOST_PORT}"
     volumes:
       - ./nginx-staging.conf:/etc/nginx/nginx.conf:ro
-      - ./templates/offline.html:/var/www/html/offline.html:ro
     depends_on:
       - web-staging
     networks:
@@ -304,19 +294,10 @@ services:
       - PRODUCTION_APP_URL=${PRODUCTION_APP_URL}
       - GCP_SA_KEY_PATH=${GCP_SA_KEY_PATH}
       - ENC_PASSPHRASE=${ENC_PASSPHRASE}
-      - DB_PATH=/app/data/db.sqlite3
-    volumes:
-      - db_data:/app/data
     networks:
       - humrine-network
     profiles:
       - production
-    # ---- Startup repair: fix volume ownership, then start app ----
-    command: >
-      sh -c "
-        chown -R appuser:appuser /app/data &&
-        exec /usr/local/bin/setup-binary.sh runserver --noreload 0.0.0.0:8000
-      "
 
   # Production Nginx (HTTPS Proxy)
   nginx-production:
@@ -340,6 +321,3 @@ networks:
     driver: bridge
     driver_opts:
       com.docker.network.driver.mtu: 1460
-
-volumes:
-  db_data:

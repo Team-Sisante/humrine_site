@@ -1,28 +1,17 @@
 # affiliate/admin.py
 
-import csv
-from io import TextIOWrapper
-from datetime import datetime
-import os
-
 from django.contrib import admin
 from django.shortcuts import redirect, render
 from django.urls import path
 from django import forms
 from django.contrib import messages
-from django.conf import settings
-from django.core.management import call_command
-
+import csv
+from io import TextIOWrapper
 from .models import TrackedAffiliateLink, AffiliateClick
 
 
 class CSVUploadForm(forms.Form):
     csv_file = forms.FileField(label='CSV file')
-
-
-class RestoreForm(forms.Form):
-    filename = forms.CharField(max_length=200, label='Backup filename')
-    confirm = forms.BooleanField(required=True, label='I understand this will wipe the database')
 
 
 @admin.register(TrackedAffiliateLink)
@@ -36,8 +25,6 @@ class TrackedAffiliateLinkAdmin(admin.ModelAdmin):
         urls = super().get_urls()
         custom_urls = [
             path('import-csv/', self.admin_site.admin_view(self.import_csv), name='affiliate_import_csv'),
-            path('backup/', self.admin_site.admin_view(self.backup_view), name='affiliate_backup'),
-            path('restore/', self.admin_site.admin_view(self.restore_view), name='affiliate_restore'),
         ]
         return custom_urls + urls
 
@@ -109,44 +96,6 @@ class TrackedAffiliateLinkAdmin(admin.ModelAdmin):
             title='Import affiliate links from CSV',
         )
         return render(request, 'admin/affiliate/import_csv.html', context)
-
-    def backup_view(self, request):
-        backup_dir = os.path.join(settings.BASE_DIR, 'data', 'backups')
-        os.makedirs(backup_dir, exist_ok=True)
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f'db_backup_{timestamp}.json'
-        filepath = os.path.join(backup_dir, filename)
-
-        with open(filepath, 'w', encoding='utf-8') as f:
-            call_command('dumpdata', exclude=['contenttypes', 'sessions'], format='json', indent=2, stdout=f)
-
-        messages.success(request, f'Backup saved as {filename}')
-        return redirect('..')
-
-    def restore_view(self, request):
-        if request.method == 'POST':
-            form = RestoreForm(request.POST)
-            if form.is_valid():
-                filename = form.cleaned_data['filename']
-                backup_dir = os.path.join(settings.BASE_DIR, 'data', 'backups')
-                filepath = os.path.join(backup_dir, filename)
-                if not os.path.exists(filepath):
-                    messages.error(request, f'Backup file not found: {filename}')
-                    return redirect('..')
-                # Flush database and load the backup
-                call_command('flush', '--noinput')
-                call_command('loaddata', filepath)
-                messages.success(request, f'Database restored from {filename}')
-                return redirect('..')
-        else:
-            form = RestoreForm()
-
-        context = dict(
-            self.admin_site.each_context(request),
-            form=form,
-            title='Restore Database from Backup',
-        )
-        return render(request, 'admin/affiliate/restore.html', context)
 
 
 @admin.register(AffiliateClick)

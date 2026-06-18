@@ -1,9 +1,0 @@
-{% extends "admin/base_site.html" %}
-{% block content %}
-<h1>Restore Database</h1>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Restore" class="default">
-</form>
-{% endblock %}

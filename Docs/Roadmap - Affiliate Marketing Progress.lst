@@ -22,8 +22,8 @@ PHASE 2: LAZADA & SHOPEE DIRECT AFFILIATE PROGRAMS
         - Lazada: Portal returned 502 error; registration not yet completed.
         - Involve Asia used as alternative; Shopee PH campaign auto-approved via Involve.
 [PENDING] 2.2 – Generate first 10 affiliate links and store in system.
-        - Several real Shopee links created via Involve Asia (sacred-heart-shirt, chick-cordless-fan, etc.).
-        - Still need to bring the total to 10 (currently ~5).
+        - First real Shopee link created via Involve Asia (`shopee-test`).
+        - More links needed to reach target (currently only 1 real link + dummy test-mouse).
 [DONE] 2.3 – Added disclosure notice and rel="nofollow sponsored" on deals page.
 [DONE] SEO – Sitemap and robots.txt created and submitted; Google Search Console verified.
 [DONE] 2.4 – IP anonymization implemented; cookie consent banner added; privacy policy updated.
@@ -34,8 +34,7 @@ PHASE 3: INVOLVE ASIA INTEGRATION (OPTIONAL)
        - Applied to Shopee PH (auto-approved) and Lazada Talent (PH) (pending).
 [DONE] 3.2 – API key received and configured.
 [DONE] 3.3 – Dynamic product catalogue view (/dynamic-deals/) created.
-[DONE] 3.4 – Add fallback/error handling for API.
-         - Dynamic deals now fall back to curated database links when API is unavailable.
+[PENDING] 3.4 – Add fallback/error handling for API.
 
 PHASE 4: ANALYTICS DASHBOARD & REPORTING
 [DONE] 4.1 – Basic click stats page (/stats/) with per-link and daily breakdown.
@@ -51,13 +50,6 @@ PHASE 6: GOOGLE ADSENSE INTEGRATION
 [DONE] 6.1 – Signed up for Google AdSense; publisher ID added.
 [DONE] 6.2 – AdSense Auto Ads script placed in base.html.
 [PENDING] 6.3 – Verify ads display and ensure policy compliance.
-
-PHASE 7: DATA PERSISTENCE & BACKUP (AFFILIATE DATABASE)
-[DONE] 7.1 – Created backup_db and restore_db Django management commands.
-[DONE] 7.2 – Added backup/restore menu options (12.9, 12.10) to Scripts/menu.js.
-[PENDING] 7.3 – Deploy persistent volume mount for SQLite in docker-compose.vm.yml.
-         - Requires adding `volumes: - ./data:/app/data` and `DB_PATH=/app/data/db.sqlite3` env var to web services.
-         - Will keep click stats across redeployments.
 
 ---
 *Last Updated: 2026-06-17*
