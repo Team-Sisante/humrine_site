@@ -138,12 +138,12 @@ services:
       - GCP_SA_KEY_PATH=${GCP_SA_KEY_PATH}
       - ENC_PASSPHRASE=${ENC_PASSPHRASE}
       - DB_PATH=/app/data/db.sqlite3
+    volumes:
+      - ./data:/app/data
     networks:
       - humrine-network
     profiles:
       - staging
-    volumes:
-      - ./data:/app/data
 
   # Staging Nginx (HTTPS Proxy)
   nginx-staging:
@@ -154,6 +154,7 @@ services:
       - "${NGINX_STAGING_HOST_PORT}:${WEB_HOST_PORT}"
     volumes:
       - ./nginx-staging.conf:/etc/nginx/nginx.conf:ro
+      - ./templates/offline.html:/var/www/html/offline.html:ro
     depends_on:
       - web-staging
     networks:
@@ -298,12 +299,12 @@ services:
       - GCP_SA_KEY_PATH=${GCP_SA_KEY_PATH}
       - ENC_PASSPHRASE=${ENC_PASSPHRASE}
       - DB_PATH=/app/data/db.sqlite3
+    volumes:
+      - ./data:/app/data
     networks:
       - humrine-network
     profiles:
       - production
-    volumes:
-      - ./data:/app/data
 
   # Production Nginx (HTTPS Proxy)
   nginx-production:
