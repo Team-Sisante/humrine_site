@@ -144,12 +144,6 @@ services:
       - humrine-network
     profiles:
       - staging
-    # ---- Startup repair: fix volume ownership, then start app ----
-    command: >
-      sh -c "
-        chown -R appuser:appuser /app/data &&
-        exec /usr/local/bin/setup-binary.sh runserver --noreload 0.0.0.0:8000
-      "
 
   # Staging Nginx (HTTPS Proxy)
   nginx-staging:
@@ -311,12 +305,6 @@ services:
       - humrine-network
     profiles:
       - production
-    # ---- Startup repair: fix volume ownership, then start app ----
-    command: >
-      sh -c "
-        chown -R appuser:appuser /app/data &&
-        exec /usr/local/bin/setup-binary.sh runserver --noreload 0.0.0.0:8000
-      "
 
   # Production Nginx (HTTPS Proxy)
   nginx-production:
