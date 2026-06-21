@@ -1,9 +1,28 @@
+<!-- templates/admin/affiliate/restore.html -->
+
 {% extends "admin/base_site.html" %}
 {% block content %}
-<h1>Restore Database</h1>
+<h1>Restore Database from Backup</h1>
+
+<h2>Available Backups</h2>
+<ul>
+    {% for file in files %}
+        <li>
+            {{ file }}
+            <a href="download-backup/{{ file }}/" class="button">Download/View</a>
+        </li>
+    {% empty %}
+        <li>No backups available.</li>
+    {% endfor %}
+</ul>
+
+<hr>
+
+<h2>Restore a Backup</h2>
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <input type="submit" value="Restore" class="default">
+    <input type="submit" value="Restore Database">
 </form>
+<p><a href="../">Back to Admin</a></p>
 {% endblock %}

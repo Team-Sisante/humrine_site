@@ -1,9 +1,12 @@
 <!-- templates/admin/affiliate/change_list_with_import.html -->
 
 {% extends "admin/change_list.html" %}
+{% load i18n %}
+
 {% block object-tools-items %}
     <li><a href="backup/" class="addlink">Backup DB</a></li>
     <li><a href="restore/" class="addlink">Restore DB</a></li>
     <li><a href="import-csv/" class="addlink">Import CSV</a></li>
+    <li><a href="export-csv/" class="addlink">{% trans "Export CSV" %}</a></li>
     {{ block.super }}
 {% endblock %}
