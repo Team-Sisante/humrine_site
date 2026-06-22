@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "name": "DEVELOPMENT CONTAINERS"
+  },
+  {
+    "id": 2,
+    "name": "DEVELOPMENT IMAGES"
+  },
+  {
+    "id": 3,
+    "name": "DEVELOPMENT DATABASE MANAGEMENT"
+  },
+  {
+    "id": 4,
+    "name": "DEVELOPMENT UTILITIES"
+  },
+  {
+    "id": 5,
+    "name": "DOCKER CONTAINERS"
+  },
+  {
+    "id": 6,
+    "name": "DOCKER IMAGES"
+  },
+  {
+    "id": 7,
+    "name": "DOCKER DATABASE MANAGEMENT"
+  },
+  {
+    "id": 8,
+    "name": "DOCKER UTILITIES"
+  },
+  {
+    "id": 9,
+    "name": "STAGING CONTAINERS"
+  },
+  {
+    "id": 10,
+    "name": "STAGING IMAGES"
+  },
+  {
+    "id": 11,
+    "name": "STAGING DATABASE MANAGEMENT"
+  },
+  {
+    "id": 12,
+    "name": "PRODUCTION CONTAINERS"
+  },
+  {
+    "id": 13,
+    "name": "PRODUCTION IMAGES"
+  },
+  {
+    "id": 14,
+    "name": "PRODUCTION DATABASE MANAGEMENT"
+  },
+  {
+    "id": 15,
+    "name": "GCP VM MANAGEMENT"
+  }
+]
