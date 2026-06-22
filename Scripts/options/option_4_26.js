@@ -19,8 +19,4 @@ console.log('\x1b[36mDisplaying current GitHub token...\x1b[0m');
         console.log(token.trim());
       } catch (error) {
         console.error('\x1b[31mFailed to get keyring token. You may not be authenticated via gh auth login.\x1b[0m');
-      }
-      
-      console.log('\x1b[33mTo regenerate a token, go to GitHub Settings → Developer Settings → Personal access tokens.\x1b[0m');
-      await pause();
 };

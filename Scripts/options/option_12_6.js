@@ -15,6 +15,4 @@ const vmIpProd = process.env.GCP_VM_IP;
         console.log(`\x1b[32mAll production containers started successfully.\x1b[0m`);
       } catch (err) {
         console.error(`\x1b[31mFailed to start production containers: ${err.message}\x1b[0m`);
-      }
-      await pause();
 };

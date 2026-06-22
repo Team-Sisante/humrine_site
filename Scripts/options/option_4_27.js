@@ -12,6 +12,4 @@ console.log('\x1b[36mAttempting to list Classic PATs...\x1b[0m');
       const openBrowser = await ask('');
       if (openBrowser.toLowerCase() === 'y') {
         runCommand('start https://github.com/settings/tokens');
-      }
-      await pause();
 };

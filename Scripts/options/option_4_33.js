@@ -7,12 +7,4 @@ const inquirer = (await import('inquirer')).default;
           name: 'envName',
           message: 'Select environment to list GitHub variables:',
           choices: ['development', 'docker', 'staging', 'production']
-        }
-      ]);
-
-      const repoFull = `${process.env.GIT_REPO_USERNAME}/${process.env.GIT_REPO_REPONAME}`;
-      const token = process.env.GITHUB_TOKEN;
-      if (!token) {
-        console.error('\x1b[31mGITHUB_TOKEN is not set.\x1b[0m');
-        await pause();
 };

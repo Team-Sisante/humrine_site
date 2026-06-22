@@ -25,11 +25,4 @@ module.exports = async function(helpers) {
           name: 'filePath',
           message: 'Enter file path(s) (space-separated for multiple, e.g., roadmap_progress.lst Docs/Roadmap_Environments.md):',
           when: (currAnswers) => currAnswers.searchScope === 'specific'
-        }
-      ]);
-
-      const { keyword, searchScope, filePath } = answers;
-
-      if (!keyword || keyword.trim() === '') {
-        await pause();
 };

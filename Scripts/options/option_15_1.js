@@ -6,6 +6,4 @@ console.log('\x1b[31m⚠ WARNING: This will remove ALL Docker containers, images
         remoteDockerSystemPrune();
       } else {
         console.log('Cleanup cancelled.');
-      }
-      await pause();
 };

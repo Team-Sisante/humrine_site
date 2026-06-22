@@ -13,6 +13,4 @@ console.log('\x1b[33mCleaning Docker content store...\x1b[0m');
         runCommand('docker system prune -a --volumes');
         runCommand('open -a Docker Desktop');
         sleep(30);
-      }
-      await pause();
 };

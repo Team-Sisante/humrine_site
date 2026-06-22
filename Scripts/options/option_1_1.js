@@ -19,14 +19,4 @@ const venvPath = path.join(__dirname, '..', 'venv');
           runCommand(`"${pipCmd}" install -r requirements.txt`);
         } else {
           console.error('\x1b[31mFailed to create venv: ' + venvRes.error + '\x1b[0m');
-        }
-      }
-
-      // TODO (Future): Enable these services once defined in docker-compose.yml
-      // runCommand(`${getDockerCompose()} --env-file .env.common --env-file .env.docker --profile dev up -d db redis mail-test`);
-      
-      // wait for db healthy (optional, but recommended)
-      const localDevDetachedCommand = `echo '🚀 Starting local development environment in detached mode...' && node Scripts/run-detached.js`;
-      runCommand(localDevDetachedCommand);
-      await pause();
 };

@@ -16,6 +16,37 @@ if (!fs.existsSync(optionScriptsDir)) {
   fs.mkdirSync(optionScriptsDir, { recursive: true });
 }
 
+// Bulletproof function to extract case body
+function extractCaseBody(sourceCode, caseId) {
+  // Match from this case to the next case, default, or end of switch
+  const regex = new RegExp(`case ['"]${caseId}['"]:[\\s\\S]*?(?=\\n\\s*case ['"]|\\n\\s*default:|\\n\\s*\\}\\s*\\n)`);
+  const match = sourceCode.match(regex);
+  if (!match) return null;
+  
+  let body = match[0];
+  
+  // Remove the "case 'X.Y':" prefix
+  body = body.replace(new RegExp(`case ['"]${caseId}['"]:`), '').trim();
+  
+  // Replace all 'break;' with 'return;' so they are valid inside an async function
+  body = body.replace(/\bbreak\s*;/g, 'return;');
+
+  // Remove leading { if present
+  if (body.startsWith('{')) {
+    body = body.slice(1).trim();
+  }
+
+  // Remove trailing } if present (if the case was wrapped in a block)
+  if (body.endsWith('}')) {
+    body = body.slice(0, -1).trim();
+  }
+
+  // Remove the trailing return; that was the original case break
+  body = body.replace(/\n\s*return\s*;\s*$/, '').trim();
+
+  return body;
+}
+
 // The Master Mapping Table
 // [OldID, NewID, Name, Section]
 const mapping = [
@@ -28,8 +59,8 @@ const mapping = [
   ['1.2', '1.6', 'Start/Restart all development containers', 1],
   ['2.8', '1.7', 'Wipe and recreate mail-test volume (DESTRUCTIVE)', 1],
   ['1.3', '1.8', 'Stop local dev', 1],
-  ['1.1', '1.9', 'Start local dev (foreground)', 1], // Pushed to bottom
-  ['1.5', '1.10', 'Start dev tunnel', 1], // Pushed to bottom
+  ['1.1', '1.9', 'Start local dev (foreground)', 1],
+  ['1.5', '1.10', 'Start dev tunnel', 1],
   
   // --- 2. DEVELOPMENT IMAGE MANAGEMENT (Uniform 1-6) ---
   ['201', '2.1', 'Delete Web image (not applicable)', 2],
@@ -37,8 +68,7 @@ const mapping = [
   ['201', '2.3', 'Delete Redis image (not applicable)', 2],
   ['201', '2.4', 'Delete Mail image (not applicable)', 2],
   ['201', '2.5', 'Delete Nginx image (not applicable)', 2],
-  ['11.1', '2.6', 'FULL CLEAN (delete all containers, images, volumes, cache)', 2], // System prune
-  // Pushed to bottom:
+  ['11.1', '2.6', 'FULL CLEAN (delete all containers, images, volumes, cache)', 2],
   ['12.1', '2.7', 'Backup all images', 2],
   ['12.2', '2.8', 'Restore all images', 2],
   ['12.3', '2.9', 'Backup individual images', 2],
@@ -100,7 +130,6 @@ const mapping = [
   ['3.2', '5.6', 'Start/Restart all docker containers', 5],
   ['103', '5.7', 'Wipe and recreate mail-docker volume (not applicable)', 5],
   ['3.3', '5.8', 'Stop dev', 5],
-  // Pushed to bottom:
   ['3.4', '5.9', 'Show dev logs', 5],
   ['3.5', '5.10', 'Restart web-dev', 5],
   ['3.6', '5.11', 'Start dev with certs', 5],
@@ -145,8 +174,7 @@ const mapping = [
   ['201', '6.3', 'Delete Redis image (not applicable)', 6],
   ['201', '6.4', 'Delete Mail image (not applicable)', 6],
   ['201', '6.5', 'Delete Nginx image (not applicable)', 6],
-  ['14.3', '6.6', 'FULL CLEAN (delete all containers, images, volumes, cache)', 6], // down -v --rmi all
-  // Pushed to bottom:
+  ['14.3', '6.6', 'FULL CLEAN (delete all containers, images, volumes, cache)', 6],
   ['9.1', '6.7', 'Build all images', 6],
   ['9.2', '6.8', 'Build all (no cache)', 6],
   ['9.3', '6.9', 'Build dev images', 6],
@@ -265,12 +293,8 @@ mapping.forEach(([oldId, newId, name, section]) => {
   if (newOptionBodies[oldId]) {
     body = newOptionBodies[oldId];
   } else {
-    // Extract case block from oldmenu.js (Fixed regex for Windows/Unix line endings)
-    const caseRegex = new RegExp(`case ['"]${oldId}['"]:[\\s\\S]*?\\n([\\s\\S]*?)\\n\\s*break;`);
-    const match = code.match(caseRegex);
-    if (match) {
-      body = match[1].trim();
-    } else {
+    body = extractCaseBody(code, oldId);
+    if (!body) {
       console.warn(`⚠️ Warning: Could not find case '${oldId}' in oldmenu.js. Skipping ${newId}.`);
       return; // Skip if not found
     }

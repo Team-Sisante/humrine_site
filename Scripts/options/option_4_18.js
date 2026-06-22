@@ -16,12 +16,4 @@ const inquirer = (await import('inquirer')).default;
       let cmd = `node Scripts/generate-env.js ${target.env} ${target.file}`;
       if (target.template) {
         cmd += ` --template ${target.template}`;
-      }
-
-      // Explicitly pass the current environment so GOOGLE_APPLICATION_CREDENTIALS is inherited
-      execSync(cmd, {
-        stdio: 'inherit',
-        env: { ...process.env }
-      });
-      await pause();
 };
