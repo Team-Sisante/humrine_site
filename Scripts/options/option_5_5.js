@@ -1,5 +1,8 @@
 module.exports = async function(helpers) {
   const { runCommand, ask, pause, dc, execSync, fs, path, isWindows, sleep, os } = helpers;
-runCommand(`echo '🔄 Restarting web-dev container...' && ${dc} --env-file .env.docker --profile dev restart web-dev`);
+const dockerDevParam = await ask('Enter additional parameter for cruise-config.xml (optional): ');
+      let dockerDevCommand = `echo '🚀 Starting development environment...' && ${dc} --env-file .env.docker --profile dev up`;
+      if (dockerDevParam) dockerDevCommand += ` ${dockerDevParam}`;
+      runCommand(dockerDevCommand);
       await pause();
 };

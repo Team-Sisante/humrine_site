@@ -103,14 +103,23 @@ async function executeMenuOption(choice) {
   if (choice === '0') process.exit(0);
   const option = options.find(o => o.id === choice);
   if (!option) { console.log('\x1b[31mInvalid option.\x1b[0m'); await pause(); return; }
+  
   try {
     const optionPath = path.join(__dirname, 'options', option.script);
     if (fs.existsSync(optionPath)) {
       const optionFunc = require(optionPath);
       const helpers = { runCommand, ask, pause, dc, execSync, fs, path, isWindows, sleep, os, remoteDockerComposeUp, remoteDeleteImage, remoteFullCleanup, remoteDockerSystemPrune, cypressInstall, venvPath, process };
       await optionFunc(helpers);
-    } else { console.log(`\x1b[31mOption script not found: ${option.script}\x1b[0m`); await pause(); }
-  } catch (err) { console.error('\x1b[31mUnexpected error:\x1b[0m', err.message); await pause(); }
+    } else { 
+      console.log(`\x1b[31mOption script not found: ${option.script}\x1b[0m`); 
+    }
+  } catch (err) { 
+    console.error('\x1b[31mUnexpected error:\x1b[0m', err.message); 
+  }
+  
+  // FIX: Always pause at the end so the screen doesn't clear immediately,
+  // allowing the user to see errors and command output.
+  await pause();
 }
 
 async function showMenu() {

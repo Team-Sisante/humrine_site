@@ -1,5 +1,4 @@
 module.exports = async function(helpers) {
   const { runCommand, ask, pause, dc, execSync, fs, path, isWindows, sleep, os } = helpers;
-runCommand(`echo 'Creating openssl certificates...' && node Scripts/generate-certs.js`);
-      await pause();
+console.log('⚠️ Not applicable: Individual image deletion is not used for local environments. Use FULL CLEAN instead.');
 };

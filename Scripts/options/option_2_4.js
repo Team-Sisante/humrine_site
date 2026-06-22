@@ -1,5 +1,4 @@
 module.exports = async function(helpers) {
-  const { runCommand, ask, pause, dc, execSync, fs, path, isWindows, sleep, os, remoteDockerComposeUp, remoteDockerComposeDownRmi, remoteDeleteImage, remoteFullCleanup, remoteDockerSystemPrune, cypressInstall, venvPath, process } = helpers;
-runCommand(`echo '⚡ Running Cypress tests for presentation (headed)...' && node -e "require('dotenv').config({path:'.env.dev'}); process.env.ENVIRONMENT='development'; process.env.CYPRESS='true'; const { spawnSync } = require('child_process'); spawnSync('npx', ['cypress','run','--headed','--browser','chrome','--config','video=true'], { stdio:'inherit', shell: true })" && echo '⚡ Running Post-Process Videos...' && node -e "require('dotenv').config({path:'.env.dev'}); process.env.ENVIRONMENT='development'; process.env.CYPRESS='true'; const { spawnSync } = require('child_process'); spawnSync('node', ['Scripts/post-process-videos.js'], { stdio:'inherit', shell: true })"`);
-      await pause();
+  const { runCommand, ask, pause, dc, execSync, fs, path, isWindows, sleep, os } = helpers;
+console.log('⚠️ Not applicable: Individual image deletion is not used for local environments. Use FULL CLEAN instead.');
 };

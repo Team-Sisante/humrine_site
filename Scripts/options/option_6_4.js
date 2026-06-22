@@ -1,5 +1,4 @@
 module.exports = async function(helpers) {
   const { runCommand, ask, pause, dc, execSync, fs, path, isWindows, sleep, os } = helpers;
-runCommand(`echo '🐳 Building dev service images (no cache)...' && ${dc} --env-file .env.docker --profile dev --progress=plain build --no-cache`);
-      await pause();
+console.log('⚠️ Not applicable: Individual image deletion is not used for local environments. Use FULL CLEAN instead.');
 };

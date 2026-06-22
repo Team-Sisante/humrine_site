@@ -1,17 +1,62 @@
 [
-  { "id": 1,  "name": "DEVELOPMENT CONTAINERS (start/restart)" },
-  { "id": 2,  "name": "DEVELOPMENT IMAGE MANAGEMENT" },
-  { "id": 3,  "name": "DEVELOPMENT DATABASE MANAGEMENT" },
-  { "id": 4,  "name": "DEVELOPMENT UTILITIES" },
-  { "id": 5,  "name": "DOCKER CONTAINERS (start/restart)" },
-  { "id": 6,  "name": "DOCKER IMAGE MANAGEMENT" },
-  { "id": 7,  "name": "DOCKER DATABASE MANAGEMENT" },
-  { "id": 8,  "name": "DOCKER UTILITIES" },
-  { "id": 9,  "name": "STAGING CONTAINERS (start/restart)" },
-  { "id": 10, "name": "STAGING IMAGE MANAGEMENT" },
-  { "id": 11, "name": "STAGING DATABASE MANAGEMENT" },
-  { "id": 12, "name": "PRODUCTION CONTAINERS (start/restart)" },
-  { "id": 13, "name": "PRODUCTION IMAGE MANAGEMENT" },
-  { "id": 14, "name": "PRODUCTION DATABASE MANAGEMENT" },
-  { "id": 15, "name": "GCP VM MANAGEMENT" }
+  {
+    "id": 1,
+    "name": "DEVELOPMENT CONTAINERS (start/restart)"
+  },
+  {
+    "id": 2,
+    "name": "DEVELOPMENT IMAGE MANAGEMENT"
+  },
+  {
+    "id": 3,
+    "name": "DEVELOPMENT DATABASE MANAGEMENT"
+  },
+  {
+    "id": 4,
+    "name": "DEVELOPMENT UTILITIES"
+  },
+  {
+    "id": 5,
+    "name": "DOCKER CONTAINERS (start/restart)"
+  },
+  {
+    "id": 6,
+    "name": "DOCKER IMAGE MANAGEMENT"
+  },
+  {
+    "id": 7,
+    "name": "DOCKER DATABASE MANAGEMENT"
+  },
+  {
+    "id": 8,
+    "name": "DOCKER UTILITIES"
+  },
+  {
+    "id": 9,
+    "name": "STAGING CONTAINERS (start/restart)"
+  },
+  {
+    "id": 10,
+    "name": "STAGING IMAGE MANAGEMENT"
+  },
+  {
+    "id": 11,
+    "name": "STAGING DATABASE MANAGEMENT"
+  },
+  {
+    "id": 12,
+    "name": "PRODUCTION CONTAINERS (start/restart)"
+  },
+  {
+    "id": 13,
+    "name": "PRODUCTION IMAGE MANAGEMENT"
+  },
+  {
+    "id": 14,
+    "name": "PRODUCTION DATABASE MANAGEMENT"
+  },
+  {
+    "id": 15,
+    "name": "GCP VM MANAGEMENT"
+  }
 ]

@@ -1,5 +1,4 @@
 module.exports = async function(helpers) {
   const { runCommand, ask, pause, dc, execSync, fs, path, isWindows, sleep, os } = helpers;
-runCommand(`echo '🐳 Building Cypress service image...' && ${dc} --env-file .env.docker --profile test --progress=plain build cypress`);
-      await pause();
+console.log('⚠️ Not applicable: Individual image deletion is not used for local environments. Use FULL CLEAN instead.');
 };
