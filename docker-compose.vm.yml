@@ -140,6 +140,10 @@ services:
       - DB_PATH=/app/data/db.sqlite3
     volumes:
       - ./data:/app/data
+      - MEDIA_ROOT=/app/data/media
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+            python manage.py runserver 0.0.0.0:8000"      
     networks:
       - humrine-network
     profiles:
@@ -301,6 +305,10 @@ services:
       - DB_PATH=/app/data/db.sqlite3
     volumes:
       - ./data:/app/data
+      - MEDIA_ROOT=/app/data/media
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py runserver 0.0.0.0:8000"      
     networks:
       - humrine-network
     profiles:
