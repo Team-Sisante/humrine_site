@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "The central hub and landing page for Humrine's suite of innovative management solutions.",
   "main": "index.js",
+  "title": "Humrine",
   "scripts": {
     "menu": "node Scripts/menu.js"
   },
