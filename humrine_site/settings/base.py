@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'home',
     'pages',
     'affiliate',
+    'toons',
 ]
 
 MIDDLEWARE = [
@@ -173,3 +174,6 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = int(get_env_variable('SECURE_HSTS_SECONDS', '31536000'))  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.environ.get('MEDIA_ROOT', BASE_DIR / 'media')    

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Syrene's Toons - Humrine{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">🎨 Syrene's Toons</h1>
+    <div class="row">
+        {% for story in stories %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    {% with story.panels.first as cover %}
+                        {% if cover %}
+                            <img src="{{ cover.image.url }}" class="card-img-top" alt="{{ story.title }}">
+                        {% endif %}
+                    {% endwith %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ story.title }}</h5>
+                        <p class="card-text text-muted">{{ story.panels.count }} panels &middot; {{ story.created_at|date:"M d, Y" }}</p>
+                    </div>
+                    <div class="card-footer bg-white border-0">
+                        <a href="{% url 'story_detail' story.slug %}" class="btn btn-primary btn-sm">Read Story</a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <p>No stories yet – coming soon!</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
