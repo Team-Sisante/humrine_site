@@ -159,6 +159,7 @@ services:
     volumes:
       - ./nginx-staging.conf:/etc/nginx/nginx.conf:ro
       - ./templates/offline.html:/var/www/html/offline.html:ro
+      - ./data:/opt/humrine_site/data:ro  
     depends_on:
       - web-staging
     networks:
@@ -324,6 +325,7 @@ services:
     volumes:
       - ./nginx-production.conf:/etc/nginx/nginx.conf:ro
       - ./templates/offline.html:/var/www/html/offline.html:ro
+      - ./data:/opt/humrine_site/data:ro  
     depends_on:
       - web-production
     networks:
