@@ -138,9 +138,9 @@ services:
       - GCP_SA_KEY_PATH=${GCP_SA_KEY_PATH}
       - ENC_PASSPHRASE=${ENC_PASSPHRASE}
       - DB_PATH=/app/data/db.sqlite3
+      - MEDIA_ROOT=/app/data/media
     volumes:
       - ./data:/app/data
-      - MEDIA_ROOT=/app/data/media
     command: >
       sh -c "python manage.py migrate --noinput &&
             python manage.py runserver 0.0.0.0:8000"      
@@ -303,9 +303,9 @@ services:
       - GCP_SA_KEY_PATH=${GCP_SA_KEY_PATH}
       - ENC_PASSPHRASE=${ENC_PASSPHRASE}
       - DB_PATH=/app/data/db.sqlite3
+      - MEDIA_ROOT=/app/data/media    
     volumes:
       - ./data:/app/data
-      - MEDIA_ROOT=/app/data/media
     command: >
       sh -c "python manage.py migrate --noinput &&
              python manage.py runserver 0.0.0.0:8000"      
