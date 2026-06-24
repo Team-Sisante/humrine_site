@@ -5,50 +5,41 @@ module.exports = async function(helpers) {
   const fs = require('fs');
   const dotenv = require('dotenv');
 
-  // 1. Load environment files
+  // 1. Parse ONLY the two .env files – no system vars
   const envCommon = path.resolve(process.cwd(), '.env.common');
   const envProduction = path.resolve(process.cwd(), '.env.production');
-  if (fs.existsSync(envCommon))    dotenv.config({ path: envCommon, override: true });
-  if (fs.existsSync(envProduction)) dotenv.config({ path: envProduction, override: true });
+  const mergedVars = {};
+
+  if (fs.existsSync(envCommon)) Object.assign(mergedVars, dotenv.parse(fs.readFileSync(envCommon, 'utf8')));
+  if (fs.existsSync(envProduction)) Object.assign(mergedVars, dotenv.parse(fs.readFileSync(envProduction, 'utf8')));
 
   // 2. Validate SSH
-  const sshUser = process.env.VM_SSH_USER;
-  const vmIp    = process.env.GCP_VM_IP;
-  if (!sshUser || !sshUser.trim()) throw new Error('VM_SSH_USER missing');
-  if (!vmIp    || !vmIp.trim())    throw new Error('GCP_VM_IP missing');
+  const sshUser = mergedVars.VM_SSH_USER;
+  const vmIp    = mergedVars.GCP_VM_IP;
+  if (!sshUser || !sshUser.trim()) throw new Error('VM_SSH_USER missing in env files');
+  if (!vmIp    || !vmIp.trim())    throw new Error('GCP_VM_IP missing in env files');
   const sshKey = path.resolve(process.cwd(), '..', 'gocd-server', 'secrets', 'agent-key');
 
-  // 3. Build a clean .env file content (every variable from your local env)
-  const validName = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
-  const envLines = Object.entries(process.env)
-    .filter(([k]) => validName.test(k) && !k.startsWith('npm_'))
-    .map(([key, val]) => `${key}=${val || ''}`);
-
-  if (!envLines.find(line => line.startsWith('IMAGE_TAG='))) {
-    envLines.push('IMAGE_TAG=latest');
-  }
-
-  const envContent = envLines.join('\n');
+  // 3. Build clean env content from merged file variables only
+  if (!mergedVars.IMAGE_TAG) mergedVars.IMAGE_TAG = 'latest';
+  const envContent = Object.entries(mergedVars)
+    .map(([key, val]) => `${key}=${val || ''}`)
+    .join('\n');
 
   // 4. Remote script
-  console.log(`\x1b[33mFixing production permissions and restarting with all env vars…\x1b[0m`);
+  console.log(`\x1b[33mFixing production permissions and restarting with clean env…\x1b[0m`);
 
   const script = `
 export PATH=/usr/local/bin:/usr/bin:/bin
 
-# Stop & remove broken container
 /usr/bin/sudo docker stop humrine-web-production 2>/dev/null || true
 /usr/bin/sudo docker rm humrine-web-production 2>/dev/null || true
-
-# Fix ownership of the bind‑mounted data directory
 /usr/bin/sudo chown -R 1000:1000 /opt/humrine_site/data
 
-# Write the environment file temporarily on the VM
 /usr/bin/sudo tee /tmp/humrine_production.env > /dev/null <<'EOF'
 ${envContent}
 EOF
 
-# Start the service using that env file – secrets are consumed, then file is deleted
 cd /opt/humrine_site
 /usr/bin/sudo docker compose -p humrine-production -f docker-compose.vm.yml --profile production \\
     --env-file /tmp/humrine_production.env up -d --remove-orphans --force-recreate --pull missing
@@ -74,7 +65,7 @@ cd /opt/humrine_site
   } else if (result.status !== 0) {
     console.error(`\x1b[31mExit code ${result.status}\x1b[0m`);
   } else {
-    console.log('\x1b[32mProduction container started with all variables correctly injected.\x1b[0m');
+    console.log('\x1b[32mProduction container restarted with clean environment.\x1b[0m');
   }
   await pause();
 };
