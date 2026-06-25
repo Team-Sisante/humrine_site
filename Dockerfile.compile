@@ -49,6 +49,7 @@ RUN export PYINSTALLER_BUILD=true \
         toons/static \
         blog/templates \
         blog/static \
+        blog/templatetags \
     ; do \
         if [ -d "/app/$dir" ]; then \
             ADD_DATA_ARGS="$ADD_DATA_ARGS --add-data \"$dir:$dir\""; \
