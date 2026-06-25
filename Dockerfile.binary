@@ -16,6 +16,9 @@ RUN apt-get update && \
     tzdata \
     fontconfig \
     fonts-dejavu-core \
+    libc-bin \
+    libc6 \
+    && ln -s /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2 \
     && fc-cache -f \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
