@@ -2,6 +2,7 @@
 
 {% extends "base.html" %}
 {% load affiliate_tags %}
+{% load blog_tags %}
 
 {% block content %}
 <section class="hero-section text-center">
@@ -36,6 +37,16 @@
             <a href="{% url 'deals' %}" class="btn btn-outline-primary rounded-pill px-4">View All Deals</a>
         </div>
         <p class="text-muted small mt-3">As an affiliate, we may earn a commission from qualifying purchases at no extra cost to you.</p>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <h2 class="fw-bold text-center mb-4">📝 Latest from the Blog</h2>
+        {% latest_posts 3 %}
+        <div class="text-center mt-4">
+            <a href="{% url 'blog_list' %}" class="btn btn-outline-primary rounded-pill px-4">View All Articles</a>
+        </div>
     </div>
 </section>
 
