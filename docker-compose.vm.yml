@@ -141,9 +141,6 @@ services:
       - MEDIA_ROOT=/app/data/media
     volumes:
       - ./data:/app/data
-    command: >
-      sh -c "/app/humrine_site_linux migrate --noinput &&
-             /app/humrine_site_linux runserver 0.0.0.0:8000"
     networks:
       - humrine-network
     profiles:
@@ -307,9 +304,6 @@ services:
       - MEDIA_ROOT=/app/data/media    
     volumes:
       - ./data:/app/data
-    command: >
-      sh -c "/app/humrine_site_linux migrate --noinput &&
-             /app/humrine_site_linux runserver 0.0.0.0:8000"  
     networks:
       - humrine-network
     profiles:
