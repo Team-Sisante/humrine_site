@@ -5,36 +5,29 @@ module.exports = async function(helpers) {
   const fs = require('fs');
   const dotenv = require('dotenv');
 
+  // 1. Load environment files (staging) – only the two .env files, no system pollution
   const envCommon = path.resolve(process.cwd(), '.env.common');
   const envStaging = path.resolve(process.cwd(), '.env.staging');
-  if (fs.existsSync(envCommon))  dotenv.config({ path: envCommon, override: true });
-  if (fs.existsSync(envStaging)) dotenv.config({ path: envStaging, override: true });
+  const mergedVars = {};
 
-  const sshUser = process.env.VM_SSH_USER;
-  const vmIp    = process.env.GCP_VM_IP;
-  if (!sshUser || !sshUser.trim()) throw new Error('VM_SSH_USER missing');
-  if (!vmIp    || !vmIp.trim())    throw new Error('GCP_VM_IP missing');
+  if (fs.existsSync(envCommon)) Object.assign(mergedVars, dotenv.parse(fs.readFileSync(envCommon, 'utf8')));
+  if (fs.existsSync(envStaging)) Object.assign(mergedVars, dotenv.parse(fs.readFileSync(envStaging, 'utf8')));
 
+  // 2. Validate SSH
+  const sshUser = mergedVars.VM_SSH_USER;
+  const vmIp    = mergedVars.GCP_VM_IP;
+  if (!sshUser || !sshUser.trim()) throw new Error('VM_SSH_USER missing in env files');
+  if (!vmIp    || !vmIp.trim())    throw new Error('GCP_VM_IP missing in env files');
   const sshKey = path.resolve(process.cwd(), '..', 'gocd-server', 'secrets', 'agent-key');
 
-  const imageTag = process.env.IMAGE_TAG || 'latest';
-  const validName = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
-  const envVars = [];
-  for (const key of Object.keys(process.env)) {
-    if (!validName.test(key)) continue;
-    const val = process.env[key] || '';
-    envVars.push({ key, val });
-  }
-  if (!envVars.find(v => v.key === 'IMAGE_TAG')) {
-    envVars.push({ key: 'IMAGE_TAG', val: imageTag });
-  }
+  // 3. Build clean env content from merged file variables only
+  if (!mergedVars.IMAGE_TAG) mergedVars.IMAGE_TAG = 'latest';
+  const envContent = Object.entries(mergedVars)
+    .map(([key, val]) => `${key}=${val || ''}`)
+    .join('\n');
 
-  const sudoEnv = envVars.map(({ key, val }) => {
-    const escaped = val.replace(/'/g, `'\\''`);
-    return `${key}='${escaped}'`;
-  }).join(' \\\n  ');
-
-  console.log(`\x1b[33mFixing staging permissions and restarting…\x1b[0m`);
+  // 4. Remote script
+  console.log(`\x1b[33mFixing staging permissions and restarting with clean env…\x1b[0m`);
 
   const script = `
 export PATH=/usr/local/bin:/usr/bin:/bin
@@ -42,11 +35,16 @@ export PATH=/usr/local/bin:/usr/bin:/bin
 /usr/bin/sudo docker stop humrine-web-staging 2>/dev/null || true
 /usr/bin/sudo docker rm humrine-web-staging 2>/dev/null || true
 /usr/bin/sudo chown -R 1000:1000 /opt/humrine_site/data
+
+/usr/bin/sudo tee /tmp/humrine_staging.env > /dev/null <<'EOF'
+${envContent}
+EOF
+
 cd /opt/humrine_site
-/usr/bin/sudo \\
-  ${sudoEnv} \\
-  docker compose -p humrine-staging -f docker-compose.vm.yml --profile staging up -d \\
-    --remove-orphans --force-recreate --pull missing
+/usr/bin/sudo docker compose -p humrine-staging -f docker-compose.vm.yml --profile staging \\
+    --env-file /tmp/humrine_staging.env up -d --remove-orphans --force-recreate --pull missing
+
+/usr/bin/sudo rm -f /tmp/humrine_staging.env
 `.trim();
 
   const result = spawnSync('ssh', [
@@ -67,7 +65,7 @@ cd /opt/humrine_site
   } else if (result.status !== 0) {
     console.error(`\x1b[31mExit code ${result.status}\x1b[0m`);
   } else {
-    console.log('\x1b[32mStaging container is now running.\x1b[0m');
+    console.log('\x1b[32mStaging container restarted with clean environment.\x1b[0m');
   }
   await pause();
 };

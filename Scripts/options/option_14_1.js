@@ -5,7 +5,7 @@ module.exports = async function(helpers) {
   const fs = require('fs');
   const dotenv = require('dotenv');
 
-  // 1. Parse ONLY the two .env files – no system vars
+  // 1. Load environment files (production)
   const envCommon = path.resolve(process.cwd(), '.env.common');
   const envProduction = path.resolve(process.cwd(), '.env.production');
   const mergedVars = {};
@@ -21,6 +21,7 @@ module.exports = async function(helpers) {
   const sshKey = path.resolve(process.cwd(), '..', 'gocd-server', 'secrets', 'agent-key');
 
   // 3. Build clean env content from merged file variables only
+  //    Always ensure IMAGE_TAG is set (default to latest)
   if (!mergedVars.IMAGE_TAG) mergedVars.IMAGE_TAG = 'latest';
   const envContent = Object.entries(mergedVars)
     .map(([key, val]) => `${key}=${val || ''}`)
