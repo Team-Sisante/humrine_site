@@ -1,68 +1,61 @@
-# =============================================================================
-#  Dockerfile.compile
-#  ---------------------------------------------------------------------------
-#  Purpose: Build a temporary environment that compiles the Django application
-#           into a single, standalone Linux binary using PyInstaller.
-#
-#  Why the --add-data line is used:
-#    - PyInstaller cannot always auto-discover Django management commands
-#      because the Django settings may not be fully loadable during analysis.
-#    - Adding the command file as plain data ensures it is present in the
-#      binary’s virtual filesystem. Django’s management‑command discovery
-#      will find it at runtime, regardless of build‑time import errors.
-# =============================================================================
-
+# Dockerfile.compile – Build a standalone humrine_site binary with PyInstaller
 FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install system build dependencies
+# System build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential libpq-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies + PyInstaller
+# Install Python deps + PyInstaller
 COPY requirements.txt .
 RUN pip install 'pip<26' || true \
     && pip install -r requirements.txt \
     && pip install pyinstaller
 
-# Copy only necessary files for compilation (exclude deploy/)
-COPY badminton_court/ ./badminton_court/
-COPY court_management/ ./court_management/
-COPY inventory/ ./inventory/
-COPY news/ ./news/
-COPY templates/ ./templates/
-COPY static/ ./static/
-COPY manage.py .
-COPY requirements.txt .
+# Copy the entire project (excluding deploy/ if present)
+COPY . .
 
 # Compile the binary
-# The entire management commands folder is bundled as data
-RUN export DJANGO_SETTINGS_MODULE=badminton_court.settings \
-    && export DEBUG=True \
+RUN export PYINSTALLER_BUILD=true \
+    && export DJANGO_SETTINGS_MODULE=humrine_site.settings.base \
+    && export DEBUG=False \
     && export SECRET_KEY=build-key-for-pyinstaller \
     && export DATABASE_URL=sqlite:///tmp/dummy.db \
+    && export GCP_PROJECT_ID=dummy-for-build \
+    && export SITE_HEADER=dummy \
+    && export SITE_TITLE=dummy \
+    && export SITE_INDEX_TITLE=dummy \
+    && export APP_PROTOCOL=http \
+    && export APP_DOMAIN=localhost \
+    && export APP_PORT=8000 \
+    && export ALLOWED_HOSTS=localhost \
+    && export CSRF_TRUSTED_ORIGINS=http://localhost:8000 \
+    && export POSTE_PROTOCOL=http \
+    && export POSTE_HOSTNAME=localhost \
+    && export POSTE_PORT=25 \
+    && export POSTE_API_USER=dummy \
+    && export POSTE_ADMIN_PASSWORD=dummy \
+    && export POSTEIO_DB_HOST=dummy \
+    && export POSTEIO_DB_PORT=5432 \
+    && export POSTEIO_DB_NAME=dummy \
+    && export POSTEIO_DB_USER=dummy \
+    && export POSTEIO_DB_PASSWORD=dummy \
+    && export ADMIN_PASSWORD=dummy \
+    && export SUPPORT_EMAIL=dummy@example.com \
     && export PYTHONPATH=/app \
     && pyinstaller \
         --onefile \
-        --name badminton_court_linux \
+        --name humrine_site_linux \
         --clean \
-        --collect-submodules celery \
-        --collect-submodules kombu \
-        --collect-submodules badminton_court \
-        --collect-submodules court_management \
-        --collect-submodules inventory \
-        --collect-submodules news \
+        --collect-all humrine_site \
+        --collect-all home \
+        --collect-all pages \
+        --collect-all affiliate \
+        --collect-all toons \
+        --collect-all blog \
         --copy-metadata django-bootstrap5 \
-        --copy-metadata django-allauth \
-        --hidden-import badminton_court.context_processors \
-        --hidden-import court_management.adapters \
-        --hidden-import court_management.email_backend \
-        --add-data "court_management/management/commands:court_management/management/commands" \
         --add-data "templates:templates" \
         --add-data "static:static" \
-        --add-data "news/templates:news/templates" \
-        --add-data "news/migrations:news/migrations" \
-        --collect-data allauth \
         manage.py
