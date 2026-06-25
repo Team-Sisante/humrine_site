@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'pages',
     'affiliate',
     'toons',
+    'blog',
 ]
 
 MIDDLEWARE = [

@@ -6,4 +6,5 @@ module.exports = async function(helpers) {
         const cmd = `ssh -i "${sshKey}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${sshUser}@${vmIp} "sudo docker exec humrine-web-production python manage.py migrate"`;
         console.log(`\x1b[33mRunning migrations on humrine-web-production…\x1b[0m`);
         runCommand(cmd);
+   await pause();           
 };

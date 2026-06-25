@@ -1,9 +1,71 @@
+// Scripts/options/option_14_1.js  (humrine_site – production DB fix)
 module.exports = async function(helpers) {
-  const { runCommand, ask, pause, dc, execSync, fs, path, isWindows, sleep, os } = helpers;
+  const { runCommand, pause, path } = helpers;
+  const { spawnSync } = require('child_process');
+  const fs = require('fs');
+  const dotenv = require('dotenv');
+
+  // 1. Parse ONLY the two .env files – no system vars
+  const envCommon = path.resolve(process.cwd(), '.env.common');
+  const envProduction = path.resolve(process.cwd(), '.env.production');
+  const mergedVars = {};
+
+  if (fs.existsSync(envCommon)) Object.assign(mergedVars, dotenv.parse(fs.readFileSync(envCommon, 'utf8')));
+  if (fs.existsSync(envProduction)) Object.assign(mergedVars, dotenv.parse(fs.readFileSync(envProduction, 'utf8')));
+
+  // 2. Validate SSH
+  const sshUser = mergedVars.VM_SSH_USER;
+  const vmIp    = mergedVars.GCP_VM_IP;
+  if (!sshUser || !sshUser.trim()) throw new Error('VM_SSH_USER missing in env files');
+  if (!vmIp    || !vmIp.trim())    throw new Error('GCP_VM_IP missing in env files');
   const sshKey = path.resolve(process.cwd(), '..', 'gocd-server', 'secrets', 'agent-key');
-        const sshUser = process.env.VM_SSH_USER || 'xmione';
-        const vmIp = process.env.GCP_VM_IP || '35.198.231.9';
-        const cmd = `ssh -i "${sshKey}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${sshUser}@${vmIp} "sudo docker exec -u root humrine-web-production chown -R appuser:appuser /app/data && sudo docker restart humrine-web-production"`;
-        console.log(`\x1b[33mFixing permissions on humrine-web-production data volume and restarting…\x1b[0m`);
-        runCommand(cmd);
+
+  // 3. Build clean env content from merged file variables only
+  if (!mergedVars.IMAGE_TAG) mergedVars.IMAGE_TAG = 'latest';
+  const envContent = Object.entries(mergedVars)
+    .map(([key, val]) => `${key}=${val || ''}`)
+    .join('\n');
+
+  // 4. Remote script
+  console.log(`\x1b[33mFixing production permissions and restarting with clean env…\x1b[0m`);
+
+  const script = `
+export PATH=/usr/local/bin:/usr/bin:/bin
+
+/usr/bin/sudo docker stop humrine-web-production 2>/dev/null || true
+/usr/bin/sudo docker rm humrine-web-production 2>/dev/null || true
+/usr/bin/sudo chown -R 1000:1000 /opt/humrine_site/data
+
+/usr/bin/sudo tee /tmp/humrine_production.env > /dev/null <<'EOF'
+${envContent}
+EOF
+
+cd /opt/humrine_site
+/usr/bin/sudo docker compose -p humrine-production -f docker-compose.vm.yml --profile production \\
+    --env-file /tmp/humrine_production.env up -d --remove-orphans --force-recreate --pull missing
+
+/usr/bin/sudo rm -f /tmp/humrine_production.env
+`.trim();
+
+  const result = spawnSync('ssh', [
+    '-i', sshKey,
+    '-o', 'StrictHostKeyChecking=no',
+    '-o', 'UserKnownHostsFile=/dev/null',
+    `${sshUser}@${vmIp}`,
+    'bash -s'
+  ], {
+    stdio: ['pipe', 'inherit', 'inherit'],
+    input: script,
+    shell: false,
+    encoding: 'utf8'
+  });
+
+  if (result.error) {
+    console.error('\x1b[31mFailed:', result.error.message, '\x1b[0m');
+  } else if (result.status !== 0) {
+    console.error(`\x1b[31mExit code ${result.status}\x1b[0m`);
+  } else {
+    console.log('\x1b[32mProduction container restarted with clean environment.\x1b[0m');
+  }
+  await pause();
 };
