@@ -27,10 +27,6 @@
         transform: translateY(-5px);
         box-shadow: 0 10px 25px rgba(0,0,0,0.12);
     }
-    .article-card img {
-        height: 200px;
-        object-fit: cover;
-    }
     .badge-category {
         background: #667eea;
         color: white;
@@ -55,7 +51,7 @@
             <div class="col-md-{% if featured.image %}6{% else %}12{% endif %}">
                 <div class="card-body text-center text-md-start">
                     <h2 class="fw-bold">{{ featured.title }}</h2>
-                    <p class="opacity-75">{{ featured.body|truncatechars:200 }}</p>
+                    <p class="opacity-75">{{ featured.body|safe|truncatechars_html:200 }}</p>
                     <a href="{{ featured.get_absolute_url }}" class="btn btn-light mt-3">Read Full Article →</a>
                 </div>
             </div>
@@ -70,12 +66,12 @@
             <div class="col-md-6 col-lg-4 mb-4">
                 <div class="card article-card h-100">
                     {% if post.image %}
-                        <img src="{{ post.image.url }}" class="card-img-top" alt="{{ post.title }}">
+                        <img src="{{ post.image.url }}" class="card-img-top img-fluid" alt="{{ post.title }}">
                     {% endif %}
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">{{ post.title }}</h5>
                         <p class="text-muted small mb-2">{{ post.published|date:"M d, Y" }}</p>
-                        <p class="card-text flex-grow-1">{{ post.body|truncatechars:150 }}</p>
+                        <p class="card-text flex-grow-1">{{ post.body|safe|truncatechars_html:150 }}</p>
                         <a href="{{ post.get_absolute_url }}" class="btn btn-outline-primary mt-auto stretched-link">Read More</a>
                     </div>
                 </div>

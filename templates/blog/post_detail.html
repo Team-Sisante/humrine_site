@@ -6,10 +6,17 @@
 {% block content %}
 <div class="container py-5">
     <article>
-        {% if post.image %}
-        <div class="text-center mb-4">
-            <img src="{{ post.image.url }}" class="img-fluid rounded shadow" alt="{{ post.title }}" style="max-height: 400px; width: 100%; object-fit: cover;">
-        </div>
+        {% if post.images.all %}
+            <div class="row mb-4">
+                {% for img in post.images.all %}
+                    <div class="col-md-6 mb-3 text-center">
+                        <img src="{{ img.image.url }}" class="img-fluid rounded" alt="{{ img.caption }}">
+                        {% if img.caption %}
+                            <p class="text-muted small mt-1">{{ img.caption }}</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
         <header class="mb-4">
             <h1 class="fw-bold">{{ post.title }}</h1>
@@ -18,7 +25,7 @@
             </p>
         </header>
         <div class="lead">
-            {{ post.body|linebreaks }}
+            {{ post.body|safe }}
         </div>
     </article>
     <hr>
