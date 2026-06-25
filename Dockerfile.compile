@@ -58,7 +58,7 @@ RUN export PYINSTALLER_BUILD=true \
             echo "Skipping (not found): $dir"; \
         fi; \
     done \
-    && echo "Update: Included templatetags" \
+    && echo "Update: Added hidden-imports for blog.templatetags" \
     && eval pyinstaller \
         --onefile \
         --name humrine_site_linux \
@@ -69,6 +69,8 @@ RUN export PYINSTALLER_BUILD=true \
         --collect-all affiliate \
         --collect-all toons \
         --collect-all blog \
+        --hidden-import blog.templatetags \
+        --hidden-import blog.templatetags.blog_tags \
         --copy-metadata django-bootstrap5 \
         $ADD_DATA_ARGS \
         manage.py
