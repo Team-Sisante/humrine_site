@@ -18,6 +18,7 @@ RUN pip install 'pip<26' || true \
 COPY . .
 
 # Compile the binary
+# Conditionally add data directories 
 RUN export PYINSTALLER_BUILD=true \
     && export DJANGO_SETTINGS_MODULE=humrine_site.settings.base \
     && export DEBUG=False \
@@ -45,7 +46,29 @@ RUN export PYINSTALLER_BUILD=true \
     && export ADMIN_PASSWORD=dummy \
     && export SUPPORT_EMAIL=dummy@example.com \
     && export PYTHONPATH=/app \
-    && pyinstaller \
+    && ADD_DATA_ARGS="" \
+    && for dir in \
+        templates \
+        static \
+        home/templates \
+        home/static \
+        pages/templates \
+        pages/static \
+        affiliate/templates \
+        affiliate/static \
+        toons/templates \
+        toons/static \
+        blog/templates \
+        blog/static \
+    ; do \
+        if [ -d "/app/$dir" ]; then \
+            ADD_DATA_ARGS="$ADD_DATA_ARGS --add-data \"$dir:$dir\""; \
+            echo "Including: $dir"; \
+        else \
+            echo "Skipping (not found): $dir"; \
+        fi; \
+    done \
+    && eval pyinstaller \
         --onefile \
         --name humrine_site_linux \
         --clean \
@@ -56,6 +79,5 @@ RUN export PYINSTALLER_BUILD=true \
         --collect-all toons \
         --collect-all blog \
         --copy-metadata django-bootstrap5 \
-        --add-data "templates:templates" \
-        --add-data "static:static" \
+        $ADD_DATA_ARGS \
         manage.py
