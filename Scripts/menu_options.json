@@ -177,7 +177,7 @@
   { "id": "12.4", "name": "Mail", "script": "option_12_4.js", "section": 12 },
   { "id": "12.5", "name": "Nginx", "script": "option_12_5.js", "section": 12 },
   { "id": "12.6", "name": "Start/Restart all production containers", "script": "option_12_6.js", "section": 12 },
-  { "id": "12.7", "name": "Wipe and recreate mail-production volume (DESTRUCTIVE)", "script": "option_12_7.js", "section": 12 },
+  { "id": "12.7", "name": "Wipe and recreate mail-production volume (not applicable)", "script": "option_12_7.js", "section": 12 },
 
   { "id": "13.1", "name": "Delete Web image", "script": "option_13_1.js", "section": 13 },
   { "id": "13.2", "name": "Delete Database image", "script": "option_13_2.js", "section": 13 },
