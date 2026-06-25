@@ -58,6 +58,7 @@ RUN export PYINSTALLER_BUILD=true \
             echo "Skipping (not found): $dir"; \
         fi; \
     done \
+    && echo "Update: Included templatetags" \
     && eval pyinstaller \
         --onefile \
         --name humrine_site_linux \
