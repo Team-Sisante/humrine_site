@@ -1,24 +1,13 @@
 # Dockerfile.compile – Build a standalone humrine_site binary with PyInstaller
-FROM python:3.12-slim
+FROM ghcr.io/team-sisante/humrine_site-builder:latest
 
 WORKDIR /app
-
-# System build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential libpq-dev \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install Python deps + PyInstaller
-COPY requirements.txt .
-RUN pip install 'pip<26' || true \
-    && pip install -r requirements.txt \
-    && pip install pyinstaller
 
 # Copy the entire project (excluding deploy/ if present)
 COPY . .
 
 # Compile the binary
-# Conditionally add data directories 
+# Conditionally add data directories
 RUN export PYINSTALLER_BUILD=true \
     && export DJANGO_SETTINGS_MODULE=humrine_site.settings.base \
     && export DEBUG=False \
