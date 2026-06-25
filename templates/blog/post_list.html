@@ -1,28 +1,87 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Blog – Humrine{% endblock %}
 
+{% block extra_css %}
+<style>
+    .hero-article {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    .hero-article .card-body {
+        padding: 2.5rem;
+    }
+    .hero-article .btn-light {
+        border-radius: 20px;
+    }
+    .article-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .article-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+    }
+    .article-card img {
+        height: 200px;
+        object-fit: cover;
+    }
+    .badge-category {
+        background: #667eea;
+        color: white;
+        font-size: 0.75rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-5">
-    <h1 class="mb-4">📝 Humrine Blog</h1>
-    <div class="row">
-        {% for post in posts %}
-            <div class="col-md-6 mb-4">
-                <div class="card h-100 shadow-sm">
+
+    <!-- Featured / Latest Article -->
+    {% with featured=posts.0 %}
+    {% if featured %}
+    <div class="hero-article shadow">
+        <div class="row g-0 align-items-center">
+            {% if featured.image %}
+            <div class="col-md-6">
+                <img src="{{ featured.image.url }}" class="img-fluid" alt="{{ featured.title }}" style="height: 320px; width: 100%; object-fit: cover;">
+            </div>
+            {% endif %}
+            <div class="col-md-{% if featured.image %}6{% else %}12{% endif %}">
+                <div class="card-body text-center text-md-start">
+                    <h2 class="fw-bold">{{ featured.title }}</h2>
+                    <p class="opacity-75">{{ featured.body|truncatechars:200 }}</p>
+                    <a href="{{ featured.get_absolute_url }}" class="btn btn-light mt-3">Read Full Article →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Recent Articles Grid -->
+    <div class="row mt-4">
+        {% for post in posts|slice:"1:" %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card article-card h-100">
                     {% if post.image %}
                         <img src="{{ post.image.url }}" class="card-img-top" alt="{{ post.title }}">
                     {% endif %}
-                    <div class="card-body">
+                    <div class="card-body d-flex flex-column">
                         <h5 class="card-title">{{ post.title }}</h5>
-                        <p class="card-text text-muted">{{ post.body|truncatechars:200 }}</p>
-                    </div>
-                    <div class="card-footer bg-white border-0">
-                        <a href="{{ post.get_absolute_url }}" class="btn btn-primary btn-sm">Read More</a>
+                        <p class="text-muted small mb-2">{{ post.published|date:"M d, Y" }}</p>
+                        <p class="card-text flex-grow-1">{{ post.body|truncatechars:150 }}</p>
+                        <a href="{{ post.get_absolute_url }}" class="btn btn-outline-primary mt-auto stretched-link">Read More</a>
                     </div>
                 </div>
             </div>
         {% empty %}
-            <p class="text-muted">No posts yet – check back soon!</p>
+            <p class="text-muted">No articles yet — check back soon!</p>
         {% endfor %}
     </div>
 </div>
