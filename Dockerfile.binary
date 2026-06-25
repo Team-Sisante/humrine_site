@@ -1,5 +1,4 @@
-# Dockerfile.binary
-# Use a slim Debian image
+# Dockerfile.binary – Minimal runtime for humrine_site binary
 FROM ubuntu:24.04
 
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -23,31 +22,26 @@ RUN apt-get update && \
 # Create a non-root user
 RUN useradd --create-home --shell /bin/bash appuser
 
-# Copy the binary and the setup script
-COPY dist_linux/badminton_court_linux /app/
+# Copy the binary and a startup script
+COPY dist_linux/humrine_site_linux /app/
 COPY deploy/setup-binary.sh /usr/local/bin/setup-binary.sh
 
-# Ensure the setup script is executable
 RUN chmod +x /usr/local/bin/setup-binary.sh
-RUN chmod +x /app/badminton_court_linux
+RUN chmod +x /app/humrine_site_linux
 
-# Pre-build Matplotlib font cache so it doesn't rebuild on every container start
+# Pre‑build Matplotlib font cache
 ENV MPLCONFIGDIR=/app/.matplotlib
 RUN mkdir -p /app/.matplotlib
 
-# Ensure persistent data directory exists with correct ownership
+# Persistent data directory
 RUN mkdir -p /app/data && chown appuser:appuser /app/data
 
-# Set environment variables for CA certificates
+# CA certificates
 ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 
-# Expose the port
 EXPOSE 8000
 
-# Set the entrypoint to our new binary-compatible script
 USER root
 ENTRYPOINT ["/usr/local/bin/setup-binary.sh"]
-
-# Default command to run the server
 CMD ["runserver", "--noreload", "0.0.0.0:8000"]
