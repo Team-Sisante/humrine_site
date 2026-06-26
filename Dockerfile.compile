@@ -15,6 +15,9 @@ COPY static/                 ./static/
 COPY manage.py               .
 COPY requirements.txt        .
 
+# ---- Install dependencies from requirements.txt ----
+RUN echo "📦 Installing Python dependencies from requirements.txt..." && pip install --no-cache-dir -r requirements.txt
+
 # ---- Compile the binary ----
 RUN export PYINSTALLER_BUILD=true \
     && export DJANGO_SETTINGS_MODULE=humrine_site.settings.base \
@@ -66,7 +69,7 @@ RUN export PYINSTALLER_BUILD=true \
             echo "Skipping (not found): $dir"; \
         fi; \
     done \
-    && echo "Update: Forcing inclusion of blog.templatetags with hidden imports and paths" \
+    && echo "Forcing inclusion of ckeditor and blog.templatetags" \
     && eval pyinstaller \
         --onefile \
         --name humrine_site_linux \
@@ -77,6 +80,8 @@ RUN export PYINSTALLER_BUILD=true \
         --collect-all affiliate \
         --collect-all toons \
         --collect-all blog \
+        --collect-all ckeditor \
+        --collect-all ckeditor_uploader \
         --hidden-import blog \
         --hidden-import blog.models \
         --hidden-import blog.templatetags \
