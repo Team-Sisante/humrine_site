@@ -24,4 +24,4 @@ echo "Collecting static files..."
 /app/humrine_site_linux collectstatic --noinput
 
 # Run the server
-exec /app/humrine_site_linux "$@"
+exec /app/humrine_site_linux runserver --noreload 0.0.0.0:8000

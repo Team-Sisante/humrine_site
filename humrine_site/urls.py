@@ -10,6 +10,8 @@ from django.contrib.sitemaps.views import sitemap
 from .sitemaps import StaticViewSitemap
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic import View
+from django.http import JsonResponse
 
 from pages.views import (
     AboutView, ContactView, FeedbackView,
@@ -17,6 +19,10 @@ from pages.views import (
 )
 from affiliate.views import DealListView
 
+class HealthCheckView(View):
+    def get(self, request):
+        return JsonResponse({"status": "ok"})
+    
 sitemaps = {'static': StaticViewSitemap}
 
 urlpatterns = [
@@ -35,6 +41,7 @@ urlpatterns = [
     path('toons/', include('toons.urls')),
     path('blog/', include('blog.urls')),
     path('ckeditor/', include('ckeditor_uploader.urls')),
+    path('health/', HealthCheckView.as_view(), name='health_check'),
 ]
 
 # Serve media files in development
