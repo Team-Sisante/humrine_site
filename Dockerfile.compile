@@ -15,7 +15,7 @@ COPY static/                 ./static/
 COPY manage.py               .
 COPY requirements.txt        .
 
-# ---- Compile the binary (includes Django setup and forced import) ----
+# ---- Compile the binary ----
 RUN export PYINSTALLER_BUILD=true \
     && export DJANGO_SETTINGS_MODULE=humrine_site.settings.base \
     && export DEBUG=False \
@@ -43,8 +43,6 @@ RUN export PYINSTALLER_BUILD=true \
     && export ADMIN_PASSWORD=dummy \
     && export SUPPORT_EMAIL=dummy@example.com \
     && export PYTHONPATH=/app \
-    && echo "--- Forcing Django setup and importing blog.templatetags ---" \
-    && python -c "import django; django.setup(); import blog.templatetags; import blog.templatetags.blog_tags; print('✅ blog.templatetags imported successfully at build time')" \
     && ADD_DATA_ARGS="" \
     && for dir in \
         templates \
