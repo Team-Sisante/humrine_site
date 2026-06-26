@@ -19,13 +19,29 @@ COPY requirements.txt        .
 RUN echo "📦 Installing Python dependencies..." && pip install --no-cache-dir -r requirements.txt
 
 # ---- Pre‑import blog.templatetags to ensure PyInstaller sees it ----
-# ⚠️ Must set ENVIRONMENT so settings.base doesn't throw error
+# Set all required environment variables so settings.base can import
 RUN export DJANGO_SETTINGS_MODULE=humrine_site.settings.base \
     && export ENVIRONMENT=development \
     && export SECRET_KEY=dummy \
     && export DEBUG=False \
     && export ALLOWED_HOSTS=localhost \
     && export CSRF_TRUSTED_ORIGINS=http://localhost \
+    && export POSTE_ADMIN_PASSWORD=dummy \
+    && export EMAIL_HOST=mail-production \
+    && export EMAIL_PORT=465 \
+    && export EMAIL_HOST_USER=admin@humrine.com \
+    && export DEFAULT_FROM_EMAIL=admin@humrine.com \
+    && export POSTE_PROTOCOL=http \
+    && export POSTE_HOSTNAME=localhost \
+    && export POSTE_PORT=25 \
+    && export POSTE_API_USER=dummy \
+    && export POSTEIO_DB_HOST=dummy \
+    && export POSTEIO_DB_PORT=5432 \
+    && export POSTEIO_DB_NAME=dummy \
+    && export POSTEIO_DB_USER=dummy \
+    && export POSTEIO_DB_PASSWORD=dummy \
+    && export ADMIN_PASSWORD=dummy \
+    && export SUPPORT_EMAIL=dummy@example.com \
     && python -c "import django; django.setup(); import blog.templatetags.blog_tags; print('✅ blog.templatetags imported successfully')"
 
 # ---- Compile the binary ----
