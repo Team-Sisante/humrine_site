@@ -1,11 +1,12 @@
 from django.db import models
 from django.utils.text import slugify
 from django.urls import reverse
+from ckeditor.fields import RichTextField
 
 class Post(models.Model):
     title = models.CharField(max_length=200)
     slug = models.SlugField(unique=True, max_length=200, blank=True)
-    body = models.TextField()
+    body = RichTextField()
     image = models.ImageField(upload_to='blog/', blank=True, null=True)
     published = models.DateTimeField(auto_now_add=True)
 
