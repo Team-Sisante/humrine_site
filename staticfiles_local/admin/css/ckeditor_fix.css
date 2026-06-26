@@ -1,0 +1,6 @@
+/* Force black text on white background for CKEditor source textarea */
+.cke_source,
+.cke_dialog_ui_input_textarea textarea {
+    color: #000000 !important;
+    background-color: #ffffff !important;
+}

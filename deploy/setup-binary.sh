@@ -1,4 +1,6 @@
 #!/bin/bash
+# deploy/setup-binary.sh
+
 set -e
 
 # Wait for the database to be ready (if a PostgreSQL host is set)

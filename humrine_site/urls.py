@@ -1,4 +1,5 @@
 # humrine_site/urls.py
+
 """
 URL configuration for humrine_site project.
 """
@@ -7,6 +8,8 @@ from django.urls import path, include
 from django.views.generic import TemplateView
 from django.contrib.sitemaps.views import sitemap
 from .sitemaps import StaticViewSitemap
+from django.conf import settings
+from django.conf.urls.static import static
 
 from pages.views import (
     AboutView, ContactView, FeedbackView,
@@ -31,9 +34,12 @@ urlpatterns = [
     path('ads.txt', TemplateView.as_view(template_name='ads.txt', content_type='text/plain')),
     path('toons/', include('toons.urls')),
     path('blog/', include('blog.urls')),
+    path('ckeditor/', include('ckeditor_uploader.urls')),
 ]
 
-from django.conf import settings
-from django.conf.urls.static import static
-
+# Serve media files in development
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Serve static files in development (DEBUG=True)
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
