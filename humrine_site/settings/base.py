@@ -186,20 +186,36 @@ CKEDITOR_IMAGE_BACKEND = "pillow"  # for resizing
 
 CKEDITOR_CONFIGS = {
     'default': {
-        'toolbar': 'Full',
+        'toolbar': [
+            ['Source', 'Maximize'],   # Source and Maximize buttons
+            ['Undo', 'Redo'],
+            ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript'],
+            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', 'Blockquote'],
+            ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+            ['Link', 'Unlink', 'Anchor'],
+            ['Image', 'Table', 'HorizontalRule', 'SpecialChar'],
+            ['Format', 'Font', 'FontSize'],
+            ['TextColor', 'BGColor'],
+            ['RemoveFormat'],
+        ],
         'height': 400,
         'width': '100%',
-        'extraPlugins': ','.join(['image2', 'uploadimage', 'resize']),
-        'removePlugins': 'image',
+        'extraPlugins': ','.join(['sourcearea', 'image2', 'uploadimage', 'resize', 'maximize']),
+        'removePlugins': 'image',   # replace default image plugin with image2
         'image2_alignClasses': ['image-left', 'image-center', 'image-right'],
         'image2_captions': True,
         'image2_disableResizer': False,
     },
-    'toons': {   
-        'toolbar': 'Basic',   # custom toolbar list
+    'toons': {
+        'toolbar': [
+            ['Source', 'Maximize'],
+            ['Bold', 'Italic', 'Underline'],
+            ['Link', 'Unlink'],
+            ['RemoveFormat'],
+        ],
         'height': 300,
         'width': '100%',
-        'extraPlugins': ['image2', 'resize'],
+        'extraPlugins': ['sourcearea', 'image2', 'resize', 'maximize'],
         'removePlugins': 'image',
         'image2_alignClasses': ['image-left', 'image-center', 'image-right'],
         'image2_captions': True,
