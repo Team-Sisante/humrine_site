@@ -17,7 +17,7 @@ fi
 mkdir -p /app/data/media
 chown -R appuser:appuser /app/data/media
 
-# Collect static files (for admin, CKEditor, etc.)
+# Collect static files to persistent volume
 echo "Collecting static files..."
 /app/humrine_site_linux collectstatic --noinput
 
