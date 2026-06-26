@@ -4,7 +4,6 @@ FROM ghcr.io/team-sisante/humrine_site-builder:latest
 WORKDIR /app
 
 # ---- Copy only the essential source code ----
-# (Do NOT copy the entire repository)
 COPY humrine_site/           ./humrine_site/
 COPY home/                   ./home/
 COPY pages/                  ./pages/
@@ -16,11 +15,7 @@ COPY static/                 ./static/
 COPY manage.py               .
 COPY requirements.txt        .
 
-# ---- Force Django initialisation and import the tag library at build time ----
-RUN python -c "import django; django.setup()" && \
-    python -c "import blog.templatetags; import blog.templatetags.blog_tags; print('✅ blog.templatetags imported successfully at build time')"
-
-# ---- Compile the binary ----
+# ---- Compile the binary (includes Django setup and forced import) ----
 RUN export PYINSTALLER_BUILD=true \
     && export DJANGO_SETTINGS_MODULE=humrine_site.settings.base \
     && export DEBUG=False \
@@ -48,6 +43,8 @@ RUN export PYINSTALLER_BUILD=true \
     && export ADMIN_PASSWORD=dummy \
     && export SUPPORT_EMAIL=dummy@example.com \
     && export PYTHONPATH=/app \
+    && echo "--- Forcing Django setup and importing blog.templatetags ---" \
+    && python -c "import django; django.setup(); import blog.templatetags; import blog.templatetags.blog_tags; print('✅ blog.templatetags imported successfully at build time')" \
     && ADD_DATA_ARGS="" \
     && for dir in \
         templates \
