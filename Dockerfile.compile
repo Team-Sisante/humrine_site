@@ -3,7 +3,7 @@ FROM ghcr.io/team-sisante/humrine_site-builder:latest
 
 WORKDIR /app
 
-# Copy only the essential source code
+# ---- Copy only the essential source code ----
 COPY humrine_site/           ./humrine_site/
 COPY home/                   ./home/
 COPY pages/                  ./pages/
@@ -15,19 +15,22 @@ COPY static/                 ./static/
 COPY manage.py               .
 COPY requirements.txt        .
 
-# Install dependencies
+# ---- Install dependencies ----
 RUN echo "📦 Installing Python dependencies..." && pip install --no-cache-dir -r requirements.txt
 
-# Pre‑import blog.templatetags to ensure PyInstaller sees it
+# ---- Pre‑import blog.templatetags to ensure PyInstaller sees it ----
+# ⚠️ Must set ENVIRONMENT so settings.base doesn't throw error
 RUN export DJANGO_SETTINGS_MODULE=humrine_site.settings.base \
+    && export ENVIRONMENT=development \
     && export SECRET_KEY=dummy \
     && export DEBUG=False \
     && export ALLOWED_HOSTS=localhost \
     && export CSRF_TRUSTED_ORIGINS=http://localhost \
     && python -c "import django; django.setup(); import blog.templatetags.blog_tags; print('✅ blog.templatetags imported successfully')"
 
-# Compile the binary
+# ---- Compile the binary ----
 RUN export PYINSTALLER_BUILD=true \
+    && export ENVIRONMENT=development \
     && export DJANGO_SETTINGS_MODULE=humrine_site.settings.base \
     && export DEBUG=False \
     && export SECRET_KEY=build-key-for-pyinstaller \
