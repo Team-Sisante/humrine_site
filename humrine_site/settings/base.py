@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     'affiliate',
     'toons',
     'blog',
+    'ckeditor',
+    'ckeditor_uploader',      
 ]
 
 MIDDLEWARE = [
@@ -178,3 +180,19 @@ if not DEBUG:
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.environ.get('MEDIA_ROOT', BASE_DIR / 'media')    
+
+CKEDITOR_UPLOAD_PATH = "uploads/"
+CKEDITOR_IMAGE_BACKEND = "pillow"  # for resizing
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'Full',
+        'height': 400,
+        'width': '100%',
+        'extraPlugins': ','.join(['image2', 'uploadimage', 'resize']),
+        'removePlugins': 'image',   # replace default image plugin with image2 (resizable)
+        'image2_alignClasses': ['image-left', 'image-center', 'image-right'],
+        'image2_captions': True,
+        'image2_disableResizer': False,
+    },
+}
