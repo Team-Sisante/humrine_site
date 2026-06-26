@@ -31,7 +31,6 @@ urlpatterns = [
     path('ads.txt', TemplateView.as_view(template_name='ads.txt', content_type='text/plain')),
     path('toons/', include('toons.urls')),
     path('blog/', include('blog.urls')),
-    path('ckeditor/', include('ckeditor_uploader.urls')),
 ]
 
 from django.conf import settings

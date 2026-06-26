@@ -1,5 +1,3 @@
-# humrine_site/humrine_site/settings/base.py
-
 """
 Django settings for humrine_site project.
 """
@@ -54,8 +52,6 @@ INSTALLED_APPS = [
     'affiliate',
     'toons',
     'blog',
-    'ckeditor',
-    'ckeditor_uploader',
 ]
 
 MIDDLEWARE = [
@@ -97,8 +93,6 @@ DATABASES = {
 }
 
 # Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -115,31 +109,19 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Internationalization
-# https://docs.djangoproject.com/en/6.0/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
-
 STATIC_URL = 'static/'
-STATIC_ROOT = '/app/staticfiles'
+STATIC_ROOT = '/app/staticfiles'   # Absolute path for persistent volume
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ---- Email / Poste.io configuration ----
-# POSTE_ADMIN_PASSWORD is the single source of truth for the admin
-# mailbox password. Django derives both EMAIL_HOST_PASSWORD (SMTP auth)
-# and POSTE_API_PASSWORD (API auth) from it.
 EMAIL_HOST = get_env_variable('EMAIL_HOST', 'mail-production')
 EMAIL_PORT = int(get_env_variable('EMAIL_PORT', '465'))
 EMAIL_HOST_USER = get_env_variable('EMAIL_HOST_USER', 'admin@humrine.com')
@@ -172,37 +154,15 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = get_env_variable('SECURE_SSL_REDIRECT', 'True').lower() == 'true'
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = int(get_env_variable('SECURE_HSTS_SECONDS', '31536000'))  # 1 year
+    SECURE_HSTS_SECONDS = int(get_env_variable('SECURE_HSTS_SECONDS', '31536000'))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.environ.get('MEDIA_ROOT', BASE_DIR / 'media')
 
-# ---- CKEditor configuration ----
-CKEDITOR_UPLOAD_PATH = "uploads/"
-CKEDITOR_IMAGE_BACKEND = "pillow"
-
-CKEDITOR_CONFIGS = {
-    'default': {
-        'toolbar': [
-            ['Source', 'Maximize'],
-            ['Undo', 'Redo'],
-            ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript'],
-            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', 'Blockquote'],
-            ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
-            ['Link', 'Unlink', 'Anchor'],
-            ['Image', 'Table', 'HorizontalRule', 'SpecialChar'],
-            ['Format', 'Font', 'FontSize'],
-            ['TextColor', 'BGColor'],
-            ['RemoveFormat'],
-        ],
-        'height': 400,
-        'width': '100%',
-        'extraPlugins': ','.join(['image2', 'uploadimage', 'resize']),
-        'removePlugins': 'image',   # replace default image plugin with image2 (resizable)
-        'image2_alignClasses': ['image-left', 'image-center', 'image-right'],
-        'image2_captions': True,
-        'image2_disableResizer': False,
-    },
-}
+# Force-load blog templatetags to ensure they are included by PyInstaller
+try:
+    import blog.templatetags.blog_tags
+except ImportError:
+    pass
