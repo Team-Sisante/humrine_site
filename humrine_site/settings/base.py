@@ -190,9 +190,18 @@ CKEDITOR_CONFIGS = {
         'height': 400,
         'width': '100%',
         'extraPlugins': ','.join(['image2', 'uploadimage', 'resize']),
-        'removePlugins': 'image',   # replace default image plugin with image2 (resizable)
+        'removePlugins': 'image',
         'image2_alignClasses': ['image-left', 'image-center', 'image-right'],
         'image2_captions': True,
         'image2_disableResizer': False,
+    },
+    'toons': {   
+        'toolbar': 'Basic',   # custom toolbar list
+        'height': 300,
+        'width': '100%',
+        'extraPlugins': ['image2', 'resize'],
+        'removePlugins': 'image',
+        'image2_alignClasses': ['image-left', 'image-center', 'image-right'],
+        'image2_captions': True,
     },
 }
