@@ -3,14 +3,24 @@ FROM ghcr.io/team-sisante/humrine_site-builder:latest
 
 WORKDIR /app
 
-# Copy the entire project
-COPY . .
+# ---- Copy only the essential source code ----
+# (Do NOT copy the entire repository)
+COPY humrine_site/           ./humrine_site/
+COPY home/                   ./home/
+COPY pages/                  ./pages/
+COPY affiliate/              ./affiliate/
+COPY toons/                  ./toons/
+COPY blog/                   ./blog/
+COPY templates/              ./templates/
+COPY static/                 ./static/
+COPY manage.py               .
+COPY requirements.txt        .
 
-# ---- PRE‑BUILD: Force Django to initialise and import the missing tag library ----
+# ---- Force Django initialisation and import the tag library at build time ----
 RUN python -c "import django; django.setup()" && \
     python -c "import blog.templatetags; import blog.templatetags.blog_tags; print('✅ blog.templatetags imported successfully at build time')"
 
-# ---- BUILD: PyInstaller with aggressive inclusion ----
+# ---- Compile the binary ----
 RUN export PYINSTALLER_BUILD=true \
     && export DJANGO_SETTINGS_MODULE=humrine_site.settings.base \
     && export DEBUG=False \
