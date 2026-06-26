@@ -3,11 +3,14 @@ FROM ghcr.io/team-sisante/humrine_site-builder:latest
 
 WORKDIR /app
 
-# Copy the entire project (excluding deploy/ if present)
+# Copy the entire project
 COPY . .
 
-# Compile the binary
-# Conditionally add data directories
+# ---- PRE‑BUILD: Force Django to initialise and import the missing tag library ----
+RUN python -c "import django; django.setup()" && \
+    python -c "import blog.templatetags; import blog.templatetags.blog_tags; print('✅ blog.templatetags imported successfully at build time')"
+
+# ---- BUILD: PyInstaller with aggressive inclusion ----
 RUN export PYINSTALLER_BUILD=true \
     && export DJANGO_SETTINGS_MODULE=humrine_site.settings.base \
     && export DEBUG=False \
@@ -58,7 +61,7 @@ RUN export PYINSTALLER_BUILD=true \
             echo "Skipping (not found): $dir"; \
         fi; \
     done \
-    && echo "Update: Added hidden-imports for blog.templatetags" \
+    && echo "Update: Forcing inclusion of blog.templatetags with hidden imports and paths" \
     && eval pyinstaller \
         --onefile \
         --name humrine_site_linux \
@@ -69,8 +72,12 @@ RUN export PYINSTALLER_BUILD=true \
         --collect-all affiliate \
         --collect-all toons \
         --collect-all blog \
+        --hidden-import blog \
+        --hidden-import blog.models \
         --hidden-import blog.templatetags \
         --hidden-import blog.templatetags.blog_tags \
+        --paths /app/blog \
+        --paths /app \
         --copy-metadata django-bootstrap5 \
         $ADD_DATA_ARGS \
         manage.py
