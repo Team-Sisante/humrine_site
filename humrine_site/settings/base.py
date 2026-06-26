@@ -199,26 +199,10 @@ CKEDITOR_CONFIGS = {
         ],
         'height': 400,
         'width': '100%',
-        'extraPlugins': ','.join(['sourcearea', 'image2', 'uploadimage', 'resize', 'maximize']),
-        'removePlugins': 'image',
+        'extraPlugins': ','.join(['image2', 'uploadimage', 'resize']),
+        'removePlugins': 'image',   # replace default image plugin with image2 (resizable)
         'image2_alignClasses': ['image-left', 'image-center', 'image-right'],
         'image2_captions': True,
         'image2_disableResizer': False,
     },
-    'toons': {
-        'toolbar': [
-            ['Source', 'Maximize'],
-            ['Bold', 'Italic', 'Underline'],
-            ['Link', 'Unlink'],
-            ['RemoveFormat'],
-        ],
-        'height': 300,
-        'width': '100%',
-        'extraPlugins': ['sourcearea', 'image2', 'resize', 'maximize'],
-        'removePlugins': 'image',
-        'image2_alignClasses': ['image-left', 'image-center', 'image-right'],
-        'image2_captions': True,
-    },
 }
-
-CKEDITOR_BASEPATH = "/static/ckeditor/ckeditor/"
