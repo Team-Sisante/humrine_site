@@ -1,3 +1,6 @@
+# nginx-production.conf.template
+# This file is processed by deploy.js – placeholders will be replaced at deploy time.
+
 events {}
 http {
     server {
@@ -24,6 +27,12 @@ http {
 
         location /media/ {
             alias /opt/humrine_site/data/media/;
+            expires 30d;
+            add_header Cache-Control "public, immutable";
+        }
+
+        location /static/ {
+            alias /opt/humrine_site/staticfiles/;
             expires 30d;
             add_header Cache-Control "public, immutable";
         }

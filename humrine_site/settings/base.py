@@ -55,7 +55,7 @@ INSTALLED_APPS = [
     'toons',
     'blog',
     'ckeditor',
-    'ckeditor_uploader',      
+    'ckeditor_uploader',
 ]
 
 MIDDLEWARE = [
@@ -87,7 +87,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'humrine_site.wsgi.application'
 
-
 # Database
 # Using environment variable for database URL or default to SQLite
 DATABASES = {
@@ -115,7 +114,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
@@ -127,11 +125,11 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = '/app/staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
@@ -179,15 +177,16 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.environ.get('MEDIA_ROOT', BASE_DIR / 'media')    
+MEDIA_ROOT = os.environ.get('MEDIA_ROOT', BASE_DIR / 'media')
 
+# ---- CKEditor configuration ----
 CKEDITOR_UPLOAD_PATH = "uploads/"
-CKEDITOR_IMAGE_BACKEND = "pillow"  # for resizing
+CKEDITOR_IMAGE_BACKEND = "pillow"
 
 CKEDITOR_CONFIGS = {
     'default': {
         'toolbar': [
-            ['Source', 'Maximize'],   # Source and Maximize buttons
+            ['Source', 'Maximize'],
             ['Undo', 'Redo'],
             ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript'],
             ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', 'Blockquote'],
@@ -201,7 +200,7 @@ CKEDITOR_CONFIGS = {
         'height': 400,
         'width': '100%',
         'extraPlugins': ','.join(['sourcearea', 'image2', 'uploadimage', 'resize', 'maximize']),
-        'removePlugins': 'image',   # replace default image plugin with image2
+        'removePlugins': 'image',
         'image2_alignClasses': ['image-left', 'image-center', 'image-right'],
         'image2_captions': True,
         'image2_disableResizer': False,
@@ -221,3 +220,5 @@ CKEDITOR_CONFIGS = {
         'image2_captions': True,
     },
 }
+
+CKEDITOR_BASEPATH = "/static/ckeditor/ckeditor/"
