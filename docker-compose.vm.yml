@@ -1,7 +1,7 @@
 # docker-compose.vm.yml – Secrets are injected via environment variables only.
 # The deploy script fetches all configuration from GCP and GitHub.
+
 services:
-  # Staging Web Service
   web-staging:
     container_name: humrine-web-staging
     image: ghcr.io/team-sisante/humrine_site-web:${IMAGE_TAG:-latest}
@@ -103,7 +103,6 @@ services:
     profiles:
       - staging
 
-  # Staging Nginx
   nginx-staging:
     container_name: humrine-nginx-staging
     image: nginx:alpine
@@ -122,7 +121,6 @@ services:
     profiles:
       - staging
 
-  # Production Web Service
   web-production:
     container_name: humrine-web-production
     image: ghcr.io/team-sisante/humrine_site-web:${IMAGE_TAG:-latest}
@@ -224,7 +222,6 @@ services:
     profiles:
       - production
 
-  # Production Nginx
   nginx-production:
     container_name: humrine-nginx-production
     image: nginx:alpine

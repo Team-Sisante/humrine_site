@@ -1,3 +1,5 @@
+# humrine_site/humrine_site/settings/base.py
+
 """
 Django settings for humrine_site project.
 """
@@ -11,15 +13,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Helper function to get environment variables strictly from OS
 def get_env_variable(var_name, default=None):
-    # Check if variable is already in os.environ (e.g., from container environment)
     if var_name in os.environ:
         return os.environ[var_name]
-
-    # If not, return default if provided
     if default is not None:
         return default
-
-    # If neither, raise error
     raise ImproperlyConfigured(f"Set the {var_name} environment variable")
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -29,14 +26,25 @@ SECRET_KEY = get_env_variable('SECRET_KEY')
 DEBUG = get_env_variable('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = get_env_variable('ALLOWED_HOSTS', '').split(',')
-
-# Dynamically trust cloudshell.dev in development
 if DEBUG:
     ALLOWED_HOSTS.append('.cloudshell.dev')
 
 CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS if host]
 if DEBUG:
     CSRF_TRUSTED_ORIGINS.append('https://*.cloudshell.dev')
+
+# ---- ENVIRONMENT detection ----
+if os.getenv('PYINSTALLER_BUILD') == 'true':
+    ENVIRONMENT = 'development'
+else:
+    ENVIRONMENT = os.environ.get('ENVIRONMENT')
+    if not ENVIRONMENT or not ENVIRONMENT.strip():
+        raise ImproperlyConfigured(
+            "CRITICAL CONFIGURATION ERROR: The 'ENVIRONMENT' environment variable "
+            "is missing or blank. Application startup aborted.\n"
+            "Set it to one of: development, docker, staging, production"
+        )
+    ENVIRONMENT = ENVIRONMENT.strip().lower()
 
 # Application definition
 INSTALLED_APPS = [
@@ -52,6 +60,8 @@ INSTALLED_APPS = [
     'affiliate',
     'toons',
     'blog',
+    'ckeditor',
+    'ckeditor_uploader',
 ]
 
 MIDDLEWARE = [
@@ -83,8 +93,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'humrine_site.wsgi.application'
 
-# Database
-# Using environment variable for database URL or default to SQLite
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -92,33 +100,30 @@ DATABASES = {
     }
 }
 
-# Password validation
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
-STATIC_ROOT = '/app/staticfiles'   # Absolute path for persistent volume
 
-# Default primary key field type
+# ---- STATIC_ROOT based on ENVIRONMENT ----
+if ENVIRONMENT in ['staging', 'production']:
+    STATIC_ROOT = '/app/staticfiles'
+else:
+    STATIC_ROOT = BASE_DIR / 'staticfiles_local'
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ---- Email / Poste.io configuration ----
@@ -134,10 +139,8 @@ else:
     EMAIL_USE_TLS = get_env_variable('EMAIL_USE_TLS', 'False').lower() == 'true'
 DEFAULT_FROM_EMAIL = get_env_variable('DEFAULT_FROM_EMAIL', 'admin@humrine.com')
 
-# Involve API key
 INVOLVE_API_KEY = os.environ.get('INVOLVE_API_KEY', '')
 
-# CSRF trusted origins for production
 CSRF_TRUSTED_ORIGINS += [
     'https://humrine.com',
     'https://www.humrine.com',
@@ -146,10 +149,8 @@ CSRF_TRUSTED_ORIGINS += [
     'https://app.humrine.com',
 ]
 
-# If behind a reverse proxy (like Nginx), uncomment the line below
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# Production security settings
 if not DEBUG:
     SECURE_SSL_REDIRECT = get_env_variable('SECURE_SSL_REDIRECT', 'True').lower() == 'true'
     SESSION_COOKIE_SECURE = True
@@ -161,8 +162,48 @@ if not DEBUG:
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.environ.get('MEDIA_ROOT', BASE_DIR / 'media')
 
-# Force-load blog templatetags to ensure they are included by PyInstaller
-try:
-    import blog.templatetags.blog_tags
-except ImportError:
-    pass
+# ---- CKEditor configuration ----
+CKEDITOR_UPLOAD_PATH = "uploads/"
+CKEDITOR_IMAGE_BACKEND = "pillow"
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': [
+            ['Source', 'Maximize'],
+            ['Undo', 'Redo'],
+            ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript'],
+            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', 'Blockquote'],
+            ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+            ['Link', 'Unlink', 'Anchor'],
+            ['Image', 'Table', 'HorizontalRule', 'SpecialChar'],
+            ['Format', 'Font', 'FontSize'],
+            ['TextColor', 'BGColor'],
+            ['RemoveFormat'],
+        ],
+        'height': 400,
+        'width': '100%',
+        'extraPlugins': ','.join(['sourcearea', 'sourcedialog', 'image2', 'uploadimage', 'resize', 'maximize']),
+        'removePlugins': 'image',
+        'sourcearea_plugin': 'sourcedialog',
+        'image2_alignClasses': ['image-left', 'image-center', 'image-right'],
+        'image2_captions': True,
+        'image2_disableResizer': False,
+    },
+    'toons': {
+        'toolbar': [
+            ['Source', 'Maximize'],
+            ['Bold', 'Italic', 'Underline'],
+            ['Link', 'Unlink'],
+            ['RemoveFormat'],
+        ],
+        'height': 300,
+        'width': '100%',
+        'extraPlugins': ['sourcearea', 'sourcedialog', 'image2', 'resize', 'maximize'],
+        'removePlugins': 'image',
+        'sourcearea_plugin': 'sourcedialog',
+        'image2_alignClasses': ['image-left', 'image-center', 'image-right'],
+        'image2_captions': True,
+    },
+}
+
+CKEDITOR_BASEPATH = "https://cdn.ckeditor.com/4.22.1/full-all/"
