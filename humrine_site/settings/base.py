@@ -192,17 +192,23 @@ CKEDITOR_CONFIGS = {
     'toons': {
         'toolbar': [
             ['Source', 'Maximize'],
-            ['Bold', 'Italic', 'Underline'],
-            ['Link', 'Unlink'],
+            ['Undo', 'Redo'],
+            ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript'],
+            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', 'Blockquote'],
+            ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+            ['Link', 'Unlink', 'Anchor'],
+            ['Image', 'Table', 'HorizontalRule', 'SpecialChar'],
+            ['Format', 'Font', 'FontSize'],
+            ['TextColor', 'BGColor'],
             ['RemoveFormat'],
         ],
-        'height': 300,
+        'height': 400,
         'width': '100%',
-        'extraPlugins': ['sourcearea', 'sourcedialog', 'image2', 'resize', 'maximize'],
+        'extraPlugins': ','.join(['sourcearea', 'image2', 'uploadimage', 'resize', 'maximize']),
         'removePlugins': 'image',
-        'sourcearea_plugin': 'sourcedialog',
         'image2_alignClasses': ['image-left', 'image-center', 'image-right'],
         'image2_captions': True,
+        'image2_disableResizer': False,
     },
 }
 
