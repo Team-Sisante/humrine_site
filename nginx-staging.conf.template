@@ -32,6 +32,7 @@ http {
         }
 
         location /static/ {
+            include /etc/nginx/mime.types;
             alias /opt/humrine_site/staticfiles/;
             expires 30d;
             add_header Cache-Control "public, immutable";
