@@ -1,29 +1,38 @@
+<!-- templates/toons/story_list.html -->
+
 {% extends "base.html" %}
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'toons/css/toons.css' %}">
+{% endblock %}
 {% block title %}Syrene's Toons - Humrine{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <h1 class="mb-4">🎨 Syrene's Toons</h1>
-    <div class="row">
+<div class="toon-gallery">
+    <h1 class="gallery-title">🎨 Syrene's Toons</h1>
+    <p class="gallery-subtitle">Explore the world of Hermione Syrene</p>
+
+    <div class="story-grid">
         {% for story in stories %}
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 shadow-sm">
-                    {% with story.panels.first as cover %}
-                        {% if cover %}
-                            <img src="{{ cover.image.url }}" class="card-img-top" alt="{{ story.title }}">
-                        {% endif %}
-                    {% endwith %}
-                    <div class="card-body">
-                        <h5 class="card-title">{{ story.title }}</h5>
-                        <p class="card-text text-muted">{{ story.panels.count }} panels &middot; {{ story.created_at|date:"M d, Y" }}</p>
-                    </div>
-                    <div class="card-footer bg-white border-0">
-                        <a href="{% url 'story_detail' story.slug %}" class="btn btn-primary btn-sm">Read Story</a>
-                    </div>
+            <div class="story-card">
+                {% with story.panels.first as cover %}
+                    {% if cover %}
+                        <img src="{{ cover.image.url }}" 
+                             alt="{{ story.title }}" 
+                             class="story-cover"
+                             loading="lazy">
+                    {% else %}
+                        <div class="story-cover-placeholder">No cover</div>
+                    {% endif %}
+                {% endwith %}
+                <div class="story-info">
+                    <h3>{{ story.title }}</h3>
+                    <p>{{ story.panels.count }} panels · {{ story.created_at|date:"M d, Y" }}</p>
+                    <a href="{% url 'story_detail' story.slug %}" class="btn-read">Read Story &rarr;</a>
                 </div>
             </div>
         {% empty %}
-            <p>No stories yet – coming soon!</p>
+            <p class="text-muted">No stories yet – coming soon!</p>
         {% endfor %}
     </div>
 </div>
