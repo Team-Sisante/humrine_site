@@ -1,24 +1,49 @@
+<!-- templates/toons/story_detail.html -->
+
 {% extends "base.html" %}
+{% load static %}
+
 {% block title %}{{ story.title }} - Syrene's Toons - Humrine{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <h1 class="mb-4">{{ story.title }}</h1>
-    <p class="text-muted">{{ story.description }}</p>
+<div class="toon-container">
+    <div class="toon-header">
+        <h1>{{ story.title }}</h1>
+        <p class="toon-description">{{ story.description|safe }}</p>
+    </div>
 
-    <div class="row justify-content-center">
+    <div class="toon-panels">
         {% for panel in story.panels.all %}
-            <div class="col-12 mb-4 text-center">
-                <img src="{{ panel.image.url }}" class="img-fluid rounded shadow" alt="Panel {{ panel.order }}">
+            <div class="panel-wrapper">
+                <img src="{{ panel.image.url }}" 
+                     alt="Panel {{ panel.order }} - {{ story.title }}"
+                     class="toon-panel-img"
+                     loading="lazy">
                 {% if panel.caption %}
-                    <p class="text-muted mt-2">{{ panel.caption }}</p>
+                    <p class="panel-caption">{{ panel.caption }}</p>
                 {% endif %}
             </div>
+        {% empty %}
+            <p class="text-muted">No panels available for this story yet.</p>
         {% endfor %}
     </div>
 
-    <div class="text-center mt-4">
-        <a href="{% url 'story_list' %}" class="btn btn-outline-primary">&larr; Back to Syrene's Toons</a>
+    <div class="toon-navigation">
+        <div class="nav-links">
+            {% if prev_story %}
+                <a href="{% url 'story_detail' prev_story.slug %}" class="btn btn-outline-primary">
+                    &larr; Previous: {{ prev_story.title }}
+                </a>
+            {% endif %}
+            
+            <a href="{% url 'story_list' %}" class="btn btn-secondary">All Stories</a>
+            
+            {% if next_story %}
+                <a href="{% url 'story_detail' next_story.slug %}" class="btn btn-outline-primary">
+                    Next: {{ next_story.title }} &rarr;
+                </a>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}
