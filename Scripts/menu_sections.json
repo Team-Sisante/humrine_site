@@ -58,5 +58,9 @@
   {
     "id": 15,
     "name": "GCP VM MANAGEMENT"
+  },
+  {
+    "id": 16,
+    "name": "ghcr.io DOCKER CONTAINERS (start/restart)"
   }
 ]

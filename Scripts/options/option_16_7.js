@@ -1,4 +1,4 @@
-// Scripts/options/option_1_7.js
+// Scripts/options/option_16_7.js
 
 module.exports = async function (helpers) {
   const { runCommand, ask, pause, dc, execSync, fs, path, isWindows, sleep, os } = helpers;
@@ -12,8 +12,9 @@ module.exports = async function (helpers) {
   }
 
   console.log('🗑️  Stopping and removing mail container...');
+  const composeFile = 'docker-compose-local-ghcr.yml';
   // Stop and remove the mail container, and remove the volume
-  runCommand(`${dc} down -v mail`);  // -v removes volumes associated with mail service
+  runCommand(`${dc} -f ${composeFile} down -v mail`);  // -v removes volumes associated with mail service
   console.log('✅ Mail volume wiped. You can now restart the mail container.');
   await pause();
 };

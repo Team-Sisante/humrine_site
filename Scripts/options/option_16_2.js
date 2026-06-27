@@ -1,4 +1,4 @@
-// Scripts/options/option_1_2.js
+// Scripts/options/option_16_2.js
 
 module.exports = async function (helpers) {
   const { runCommand, ask, pause, dc, execSync, fs, path, isWindows, sleep, os } = helpers;

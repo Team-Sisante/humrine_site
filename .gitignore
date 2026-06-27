@@ -39,4 +39,5 @@ humrine_site/settings/__pycache__/
 build-info/
 data/backups/
 
-dist_linux/humrine_site_linux
+dist_linux/
+postgres_data/
