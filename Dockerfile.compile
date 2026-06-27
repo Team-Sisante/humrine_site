@@ -42,7 +42,8 @@ RUN export DJANGO_SETTINGS_MODULE=humrine_site.settings.base \
     && export POSTEIO_DB_PASSWORD=dummy \
     && export ADMIN_PASSWORD=dummy \
     && export SUPPORT_EMAIL=dummy@example.com \
-    && python -c "import django; django.setup(); import blog.templatetags.blog_tags; print('✅ blog.templatetags imported successfully')"
+    # && python -c "import django; django.setup(); import blog.templatetags.blog_tags; print('✅ blog.templatetags imported successfully')"
+    && python -c "import django; django.setup(); import blog; import blog.templatetags.blog_tags; print('✅ blog and its templatetags imported successfully')"
 
 # ---- Compile the binary ----
 RUN export PYINSTALLER_BUILD=true \
