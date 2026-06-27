@@ -189,5 +189,13 @@
   { "id": "14.1", "name": "Fix production DB permissions", "script": "option_14_1.js", "section": 14 },
   { "id": "14.2", "name": "Run production migrations", "script": "option_14_2.js", "section": 14 },
 
-  { "id": "15.1", "name": "Full Docker system reset (⚠ DESTROYS everything)", "script": "option_15_1.js", "section": 15 }
+  { "id": "15.1", "name": "Full Docker system reset (⚠ DESTROYS everything)", "script": "option_15_1.js", "section": 15 },
+
+  { "id": "16.1", "name": "Web", "script": "option_16_1.js", "section": 16 },
+  { "id": "16.2", "name": "Database", "script": "option_16_2.js", "section": 16 },
+  { "id": "16.3", "name": "Redis", "script": "option_16_3.js", "section": 16 },
+  { "id": "16.4", "name": "Mail", "script": "option_16_4.js", "section": 16 },
+  { "id": "16.5", "name": "Nginx (not applicable)", "script": "option_16_5.js", "section": 16 },
+  { "id": "16.6", "name": "Start/Restart all development containers", "script": "option_16_6.js", "section": 16 },
+  { "id": "16.7", "name": "Wipe and recreate mail-test volume (DESTRUCTIVE)", "script": "option_16_7.js", "section": 16 }
 ]
