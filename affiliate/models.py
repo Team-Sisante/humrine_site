@@ -1,7 +1,7 @@
 # affiliate/models.py
 
 from django.db import models
-from django.contrib.auth.models import User  # optional, for logged‑in users
+from django.conf import settings  # <-- use this instead of User import
 
 class TrackedAffiliateLink(models.Model):
     original_url = models.URLField(max_length=2000)
@@ -35,7 +35,7 @@ class AffiliateClick(models.Model):
         related_name='clicks'
     )
     user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,  # <-- changed from User
         on_delete=models.SET_NULL,
         null=True,
         blank=True
