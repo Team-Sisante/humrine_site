@@ -19,6 +19,19 @@ def get_env_variable(var_name, default=None):
         return default
     raise ImproperlyConfigured(f"Set the {var_name} environment variable")
 
+# ---- ENVIRONMENT detection ----
+if os.getenv('PYINSTALLER_BUILD') == 'true':
+    ENVIRONMENT = 'development'
+else:
+    ENVIRONMENT = os.environ.get('ENVIRONMENT')
+    if not ENVIRONMENT or not ENVIRONMENT.strip():
+        raise ImproperlyConfigured(
+            "CRITICAL CONFIGURATION ERROR: The 'ENVIRONMENT' environment variable "
+            "is missing or blank. Application startup aborted.\n"
+            "Set it to one of: development, docker, staging, production"
+        )
+    ENVIRONMENT = ENVIRONMENT.strip().lower()
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -27,6 +40,21 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'django_bootstrap5',
+    # 'allauth',
+    # 'allauth.account',
+    # 'allauth.socialaccount',
+    # 'allauth.socialaccount.providers.google',
+    # 'allauth.socialaccount.providers.facebook',
+    # 'allauth.socialaccount.providers.twitter',
+    'home',
+    'pages',
+    'affiliate',
+    # 'toons',
+    'blog',
+    'ckeditor',
+    'ckeditor_uploader',
 ]
 
 MIDDLEWARE = [
@@ -37,7 +65,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-#     # 'allauth.account.middleware.AccountMiddleware',
+    # 'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'humrine_site.urls'

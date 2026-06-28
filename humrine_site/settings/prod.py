@@ -1,4 +1,8 @@
-# humrine_site/humrine_site/settings/prod.py
+# humrine_site/settings/prod.py
+"""
+Production settings – overrides for production environment.
+"""
+
 import os
 from django.core.exceptions import ImproperlyConfigured
 from .base import *
