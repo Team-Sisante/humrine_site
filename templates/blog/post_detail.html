@@ -1,34 +1,74 @@
+<!-- templates/blog/post_detail.html -->
+
 {% extends "base.html" %}
 {% load static %}
 
 {% block title %}{{ post.title }} – Humrine Blog{% endblock %}
 
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'blog/css/blog_detail.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-    <article>
-        {% if post.images.all %}
-            <div class="row mb-4">
-                {% for img in post.images.all %}
-                    <div class="col-md-6 mb-3 text-center">
-                        <img src="{{ img.image.url }}" class="img-fluid rounded" alt="{{ img.caption }}">
-                        {% if img.caption %}
-                            <p class="text-muted small mt-1">{{ img.caption }}</p>
-                        {% endif %}
-                    </div>
-                {% endfor %}
+
+{# --- 1. HERO SECTION --- #}
+<div class="blog-hero">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 text-center">
+                <p class="blog-hero__meta">
+                    <i class="far fa-calendar-alt"></i> {{ post.published|date:"F j, Y" }}
+                </p>
+                <h1 class="blog-hero__title">{{ post.title }}</h1>
             </div>
-        {% endif %}
-        <header class="mb-4">
-            <h1 class="fw-bold">{{ post.title }}</h1>
-            <p class="text-muted">
-                <i class="far fa-calendar-alt"></i> {{ post.published|date:"F j, Y" }}
-            </p>
-        </header>
-        <div class="lead">
-            {{ post.body|safe }}
         </div>
-    </article>
-    <hr>
-    <a href="{% url 'blog_list' %}" class="btn btn-outline-secondary">&larr; Back to Blog</a>
+    </div>
 </div>
+
+{# --- 2. MAIN CONTENT --- #}
+<div class="container blog-content">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+
+            {# --- Image Gallery --- #}
+            {% if post.images.all %}
+            <div class="blog-gallery">
+                <div class="row g-4">
+                    {% for img in post.images.all %}
+                        <div class="col-md-6">
+                            <img src="{{ img.image.url }}" class="blog-gallery__img" alt="{{ img.caption|default:post.title }}">
+                            {% if img.caption %}
+                                <p class="blog-gallery__caption">{{ img.caption }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {# --- The Story --- #}
+            <article class="blog-story">
+                {{ post.body|safe }}
+            </article>
+
+            {# --- Facebook CTA (Optional – you can remove if already in body) --- #}
+            {# This is a dedicated CTA block if you want to add a prominent button #}
+            {# The link is already in the body, so you can skip this if you prefer. #}
+            {# Uncomment the block below if you want a separate CTA button. #}
+            {#
+            <div class="blog-cta">
+                <a href="https://www.facebook.com/share/p/18jWu3Rxab/" target="_blank" rel="noopener" class="btn">
+                    <i class="fab fa-facebook me-2"></i>Watch on Facebook
+                </a>
+            </div>
+            #}
+
+            <hr>
+            <a href="{% url 'blog_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Blog
+            </a>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
