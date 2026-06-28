@@ -1,16 +1,293 @@
-services:
-  web:
-    build: .
-    container_name: humrine_site_web
-    volumes:
-      - .:/app
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env.docker
-    networks:
-      - humrine-network
+# docker-compose.yml – for humrine_site development
+# Note to AI: Do not use version here because it is obsolete and do not remove this comment.
+
+x-app-volumes: &app-volumes
+  - /app/node_modules
+  - /app/venv
+  - ./certs:/certs:ro
+
+volumes:
+  postgres_data:
+  postgres_test_data:
+  poste_data:
 
 networks:
-  humrine-network:
+  app-network:
     driver: bridge
+
+services:
+  # Development Database (web-dev depends on this)
+  db:
+    container_name: humrine_db
+    image: postgres:14
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    networks:
+      - app-network
+    profiles:
+      - dev
+      - test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis (web-dev depends on this)
+  redis:
+    container_name: humrine_redis
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_HOST_PORT:-6379}:6379"
+    networks:
+      - app-network
+    profiles:
+      - dev
+      - test
+      - presentation
+      - tunnel
+
+  # Mail server (web-dev depends on this)
+  mail-test:
+    container_name: humrine_mail
+    image: ghcr.io/team-sisante/badminton_court-mail:latest  # use same Poste.io image
+    restart: unless-stopped
+    ports:
+      - "${MAIL_SMTP_HOST_PORT:-25}:25"
+      - "${MAIL_SUBMISSION_HOST_PORT:-587}:587"
+      - "${MAIL_SMTPS_HOST_PORT:-465}:465"
+      - "${MAIL_HTTPS_HOST_PORT:-8444}:443"
+    environment:
+      - HTTPS=ON
+    volumes:
+      - poste_data:/data
+      - ./certs/posteio-cert.pem:/data/ssl/server.crt
+      - ./certs/posteio-key.pem:/data/ssl/server.key
+      - ./certs/ca.pem:/data/ssl/ca.crt
+    networks:
+      - app-network
+    profiles:
+      - dev
+      - test
+    healthcheck:
+      test: ["CMD", "nc", "-zv", "localhost", "25"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 60s
+
+  # Development Web Service (humrine_site)
+  web-dev:
+    container_name: humrine_web_dev
+    build:
+      context: .
+      dockerfile: Dockerfile.dev  # you may need to adjust or use existing Dockerfile
+    volumes: *app-volumes
+    ports:
+      - "${WEB_HOST_PORT:-8000}:8000"
+    env_file:
+      - .env.common
+      - .env.dev
+    environment:
+      - POSTE_API_HOST=${POSTE_PROTOCOL}://${POSTE_HOSTNAME}:${POSTE_PORT}
+      - POSTE_API_USER=${POSTE_API_USER}
+      - POSTE_ADMIN_PASSWORD=${POSTE_ADMIN_PASSWORD}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ADMIN_FIRST_NAME=${ADMIN_FIRST_NAME}
+      - ADMIN_LAST_NAME=${ADMIN_LAST_NAME}
+    networks:
+      - app-network
+    profiles:
+      - dev
+      - tunnel
+    depends_on:
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
+      mail-test:
+        condition: service_started
+
+  # (Optional) Celery Worker
+  celery:
+    container_name: humrine_celery
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    entrypoint: ["celery"]
+    command: ["-A", "humrine_site", "worker", "--loglevel=info"]
+    volumes: *app-volumes
+    depends_on:
+      - redis
+    env_file:
+      - .env.dev
+    networks:
+      - app-network
+    profiles:
+      - dev
+
+  # (Optional) Celery Beat
+  celery-beat:
+    container_name: humrine_celery_beat
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    entrypoint: ["celery"]
+    command: ["-A", "humrine_site", "beat", "--loglevel=info"]
+    volumes: *app-volumes
+    depends_on:
+      - redis
+    env_file:
+      - .env.dev
+    networks:
+      - app-network
+    profiles:
+      - dev
+
+  # Test Database (for test profile)
+  db-test:
+    container_name: humrine_db_test
+    image: postgres:14
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data/
+    ports:
+      - "${POSTGRES_PORT_TEST:-5433}:5432"
+    networks:
+      - app-network
+    profiles:
+      - test
+
+  # Test Web Service (for test profile)
+  web-test:
+    container_name: humrine_web_test
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes: *app-volumes
+    ports:
+      - "${WEB_TEST_PORT:-8001}:8000"
+    environment:
+      - CYPRESS=true
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db-test:5432/${POSTGRES_DB}
+    env_file:
+      - .env.dev
+    networks:
+      - app-network
+    profiles:
+      - test
+    depends_on:
+      - redis
+
+  # Ngrok Tunnel Service (for tunnel profile)
+  tunnel:
+    container_name: humrine_tunnel
+    build:
+      context: .
+      dockerfile: Dockerfile.tunnel
+    command: python tunnel.py
+    volumes: *app-volumes
+    depends_on:
+      - web-dev
+    environment:
+      - NGR_AUTHTOKEN=${NGR_AUTHTOKEN}
+      - APP_PORT=${WEB_HOST_PORT}
+    env_file:
+      - .env.dev
+    networks:
+      - app-network
+    profiles:
+      - tunnel
+
+  # Test data setup (optional)
+  test-setup:
+    container_name: humrine_test_setup
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: python manage.py load_test_data
+    volumes: *app-volumes
+    depends_on:
+      - db-test
+      - redis
+      - web-test
+    environment:
+      - DEBUG=${DEBUG}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db-test:5432/${POSTGRES_DB}
+      - REDIS_URL=${REDIS_URL}
+    env_file:
+      - .env.dev
+    profiles:
+      - test
+    networks:
+      - app-network
+
+  # Cypress (optional)
+  cypress:
+    container_name: humrine_cypress
+    build:
+      context: .
+      dockerfile: Dockerfile.cypress
+    volumes:
+      - .:/e2e/root
+      - ./cypress:/e2e/cypress
+      - ./cypress.config.js:/e2e/cypress.config.js
+      - ./cypress/videos:/e2e/cypress/videos
+      - ./cypress/screenshots:/e2e/cypress/screenshots
+      - ./cypress/presentation-videos:/e2e/cypress/presentation-videos
+      - ./scripts:/e2e/scripts
+      - ./certs:/certs:ro
+    environment:
+      DOCKER_CONTAINER: "true"
+      CYPRESS_BASEURL: http://web-test:8000
+      CYPRESS_HEADED: ${CYPRESS_HEADED}
+      POSTE_API_HOST: ${POSTE_PROTOCOL}://${POSTE_HOSTNAME}:${POSTE_PORT}
+      POSTE_API_USER: ${POSTE_API_USER}
+      POSTE_ADMIN_PASSWORD: ${POSTE_ADMIN_PASSWORD}
+    env_file:
+      - .env.dev
+    depends_on:
+      web-test:
+        condition: service_started
+      mail-test:
+        condition: service_healthy
+    profiles:
+      - test
+    networks:
+      - app-network
+
+  # Presentation video creation (optional)
+  presentation:
+    container_name: humrine_presentation
+    build:
+      context: .
+      dockerfile: Dockerfile.cypress
+    volumes:
+      - ./cypress:/e2e/cypress
+      - ./cypress.config.js:/e2e/cypress.config.js
+      - ./scripts:/e2e/scripts
+      - ./cypress/videos:/e2e/cypress/videos
+      - ./cypress/presentation-videos:/e2e/cypress/presentation-videos
+      - ./certs:/certs:ro
+    environment:
+      - CYPRESS_BASEURL=${CYPRESS_BASEURL}
+      - DISPLAY=:99
+    env_file:
+      - .env.dev
+    depends_on:
+      - web-dev
+    profiles:
+      - presentation
+    networks:
+      - app-network
