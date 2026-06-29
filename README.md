@@ -3,81 +3,81 @@
 Everything mirrors your real repo's folder structure.
 
 ## A. Bug fixes (drop in, replacing the existing file)
-- `manage.py`, `humrine_site/wsgi.py`, `humrine_site/asgi.py` — fix the wrong
-  default settings module (root cause of `AppRegistryNotReady`)
+- `manage.py`, `humrine_site/wsgi.py`, `humrine_site/asgi.py` — wrong default settings module (root cause of `AppRegistryNotReady`)
 - `humrine_site/settings/static.py` — fixes the `ENVIRONMENT` import
-- `humrine_site/settings/base.py` — restores `INSTALLED_APPS`, adds `'engagement'`
-- `humrine_site/settings/__init__.py` — removes the `ROOT_URLCONF` override that
-  was silently disabling ALL real routing, site-wide, all the time
-- `humrine_site/urls.py` — removes a dead import, uncomments `toons`, adds
-  `engagement` AND `home` (`path('', include('home.urls'))` — this is what
-  fixes the `/` 404)
+- `humrine_site/settings/base.py` — restores `INSTALLED_APPS` (now including `allauth.*` — see below), adds `'engagement'`, uncomments `allauth.account.middleware.AccountMiddleware`
+- `humrine_site/settings/__init__.py` — removes the `ROOT_URLCONF` override that was silently disabling all real routing
+- `humrine_site/urls.py` — dead import removed, `toons`/`engagement`/`home`/`accounts` (allauth) all wired in
 
-⚠️ **Diff `base.py` against your current file** before overwriting — I
-restored `INSTALLED_APPS` from your `base.py.bak`, kept `allauth.*` commented
-out (separate issue, see below), and added `'engagement'`.
+⚠️ **Diff `base.py` and `urls.py` against your current files** before overwriting.
 
-⚠️ **`/health/` now resolves to a different view than before.** `home.urls`
-also defines a `health/` route (plain-text `"OK"`), and it now sits ahead of
-your original `path('health/', HealthCheckView.as_view(), ...)` (JSON
-`{"status": "ok"}`) — so the JSON one is currently unreachable dead code.
-Harmless unless something external expects that exact JSON shape. Fix by
-either deleting `home/urls.py`'s `health/` line, or reordering `urls.py`.
+## A.1 — NEW this round: allauth is now actually enabled
+This is what was causing `RuntimeError: Model class allauth.account.models.EmailAddress
+doesn't declare an explicit app_label...` on `/admin/login/`. `AUTHENTICATION_BACKENDS`
+referenced allauth's backend while `allauth.*` sat commented out of `INSTALLED_APPS` —
+neither off nor on. Confirmed fixed: `/admin/login/` now returns `200` in my sandbox.
 
-## B. New / extended app code (the feature)
-- `toons/__init__.py`, `apps.py`, `admin.py`, `views.py`, `urls.py`, `tests.py`
-  — restored from `toons_temp/` (NOT migrations — see below)
-- `blog/views.py` — adds the engagement mixin to `PostDetailView`
-- `templates/blog/post_detail.html`, `templates/toons/story_detail.html` —
-  one new `{% include %}` line each
-- `engagement/` — the full new app, **including `tests.py`** (11 test cases —
-  see "Tests" below)
-
-After copying these in:
+**Install these 4 packages first** (see `requirements-additions.txt` — these aren't
+hard dependencies of `django-allauth` itself, they're needed by the specific
+providers you have configured):
 ```
-python manage.py migrate
-python manage.py test engagement
+PyJWT==2.13.0
+cryptography==49.0.0
+oauthlib==3.3.1
+requests-oauthlib==2.0.0
 ```
+Discovered one at a time by actually running `migrate` and fixing each
+`ModuleNotFoundError` as it appeared — `jwt` (Google), then `cryptography`
+(Google's JWT verification), then `oauthlib`/`requests-oauthlib` (Twitter's
+OAuth1 flow).
 
-## Tests
-`engagement/tests.py` has 11 cases, all passing against a clean DB in my
-sandbox: anonymous users blocked from commenting/reacting, comment creation
-and rendering, hidden comments excluded, empty comments rejected, reaction
-create/toggle-off/switch-type behavior, invalid reaction type rejected, two
-users reacting independently. `toons/tests.py` is still just Django's default
-empty boilerplate — I didn't add toon-specific tests since I didn't change
-toons' own behavior, only restored its missing files.
-
-**Caveat:** these pass in an isolated sandbox (fresh sqlite, dummy env vars).
-I have not run them against your actual local environment, real database, or
-Docker setup — please run `python manage.py test engagement` yourself after
-applying these files and tell me if anything differs.
-
-## ⚠️ NOT included / NOT fixed: `toons/migrations/`
-Two stacked problems, confirmed by reproduction (`/toons/` → `OperationalError:
-no such table: toons_toonstory`):
-1. `toons/migrations/` is missing `__init__.py` — Django doesn't even
-   recognize it as a migrations package (`showmigrations toons` → `(no
-   migrations)`), so `migrate` silently skips it with no error.
-2. Once `__init__.py` exists, the real gap shows up: only `0003_...py` exists,
-   and it depends on a `0002_alter_toonstory_description` that doesn't exist —
-   `0001` and `0002` are both missing.
-
-Check your actual local repo first — they may exist there and just didn't
-make it into this mirror. If they're genuinely gone and this is dev-only with
-disposable data:
-```bash
-touch toons/migrations/__init__.py
-rm toons/migrations/0003_alter_toonpanel_order_alter_toonstory_description_and_more.py
-python manage.py makemigrations toons
-python manage.py migrate
+Then:
+```
+pip install -r requirements.txt   # after adding the 4 lines above
+python manage.py migrate          # applies allauth's own account.* and socialaccount.* tables
 ```
 
-## ⚠️ NOT fixed: allauth / login
-`AUTHENTICATION_BACKENDS` references `allauth.account.auth_backends.AuthenticationBackend`,
-but `allauth.*` is commented out of `INSTALLED_APPS`. As configured, this
-breaks **all** login, site-wide (confirmed during testing). Either remove
-that line from `AUTHENTICATION_BACKENDS` until allauth is properly installed,
-or actually install it (apps back in `INSTALLED_APPS`, run its migrations,
-uncomment `path('accounts/', include('allauth.urls'))`, add
-`allauth.account.middleware.AccountMiddleware` to `MIDDLEWARE`).
+## ⚠️ Still no social signup buttons after this — here's why, and what's left
+Enabling the apps isn't sufficient. I tested `/accounts/signup/` and it now
+crashes with `allauth.socialaccount.models.SocialApp.DoesNotExist` — there's
+no actual Google/Facebook/Twitter OAuth app registered anywhere yet. This is
+the one piece I genuinely can't do for you, since it needs real credentials
+from each provider's developer console. Two ways to register them once you
+have the Client ID/Secret for each:
+
+**Option 1 — Django admin (simplest, no code change):**
+1. `python manage.py createsuperuser`
+2. Log into `/admin/`, go to **Social Applications** → **Add**
+3. For each provider: pick the provider, paste Client ID + Secret, add your Site
+
+**Option 2 — settings-driven (better for Docker/env-var workflow this project already uses):**
+Add an `'APP'` key to each provider in `social_auth.py`'s `SOCIALACCOUNT_PROVIDERS`:
+```python
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+        'APP': {
+            'client_id': get_env_variable('GOOGLE_CLIENT_ID'),
+            'secret': get_env_variable('GOOGLE_CLIENT_SECRET'),
+            'key': '',
+        },
+    },
+    # ... same 'APP' pattern for 'facebook' and 'twitter'
+}
+```
+I'm inferring `GOOGLE_CLIENT_ID`/`FACEBOOK_CLIENT_ID`/`TWITTER_CLIENT_ID` as the
+likely paired env var names (your env files already had `*_CLIENT_SECRET` for
+all three) — verify the actual names in your real `.env` files before using this.
+
+## B. New / extended app code (the comment/reaction feature) — unchanged this round
+See previous README content: `toons/` restoration, `blog/views.py`, the two
+templates, and the full `engagement/` app including `tests.py` (11 passing tests).
+
+## ⚠️ Still NOT fixed: `toons/migrations/` gap
+Unchanged from before — missing `__init__.py` plus missing `0001`/`0002`. See
+prior notes; confirmed via `/toons/` → `OperationalError: no such table`.
+
+## ⚠️ Still outstanding (cosmetic): `/health/` route shadowing
+`home.urls`'s plain-text `health/` still sits ahead of your JSON
+`HealthCheckView` in `urls.py`. Unchanged from before.

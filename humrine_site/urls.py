@@ -44,7 +44,7 @@ urlpatterns = [
     path('', include('home.urls')),
     # path('ckeditor/', include('ckeditor_uploader.urls')),
     path('health/', HealthCheckView.as_view(), name='health_check'),
-    # path('accounts/', include('allauth.urls')),
+    path('accounts/', include('allauth.urls')),
 ]
 
 # ---- Conditionally add affiliate/deals (skip during migrations) ----
