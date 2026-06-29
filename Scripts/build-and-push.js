@@ -23,9 +23,10 @@ const shaTag = `sha-${gitSha}`;
 // 2. Login to GitHub Container Registry
 execSync(`echo "${TOKEN}" | docker login ghcr.io -u ${GIT_REPO_USERNAME} --password-stdin`, { stdio: 'inherit' });
 
-// 3. Build and push the web image (binary)
+// 3. Build and push the web image (binary) and the mail image
 const images = [
-  { dockerfile: 'Dockerfile.binary', name: 'humrine_site-web' }
+  { dockerfile: 'Dockerfile.binary', name: 'humrine_site-web' },
+  { dockerfile: 'Dockerfile.posteio',   name: 'humrine_site-mail' },
 ];
 
 for (let attempt = 1; attempt <= 3; attempt++) {

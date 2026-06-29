@@ -68,7 +68,7 @@ services:
 
   # ----- Mail (staging) -----
   mail-staging:
-    image: ghcr.io/team-sisante/badminton_court-mail:${IMAGE_TAG:-latest}  # same Poste.io image humrine's dev compose already uses
+    image: ghcr.io/team-sisante/humrine_site-mail:${IMAGE_TAG:-latest}
     restart: unless-stopped
     mem_limit: 512m
     ports:
@@ -92,7 +92,7 @@ services:
 
   # ----- Mail (production) -----
   mail-production:
-    image: ghcr.io/team-sisante/badminton_court-mail:${IMAGE_TAG:-latest}
+    image: ghcr.io/team-sisante/humrine_site-mail:${IMAGE_TAG:-latest}
     restart: unless-stopped
     mem_limit: 512m
     ports:

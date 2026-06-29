@@ -1,0 +1,57 @@
+# Dockerfile.posteio
+# Extends the official Poste.io image to:
+#   - Disable the automatic blocking of "bad" connections on SMTP (25) and Submission (587)
+#   - Safely configure SMTPS (implicit SSL) on the port given by MAIL_SMTPS_HOST_PORT
+#     without throwing EADDRINUSE errors.
+#
+# This is humrine_site's own mail image (ghcr.io/team-sisante/humrine_site-mail).
+# It is built and pushed by Scripts/build-and-push.js as part of the
+# humrine_site-artifacts pipeline, independently of badminton_court-mail.
+
+FROM analogic/poste.io
+
+# ------------------------------------------------------------------
+# 1. Remove any leftover attempts at the old blocking-disable script
+# ------------------------------------------------------------------
+RUN rm -f /etc/cont-init.d/99-disable-blocking.sh
+
+# ------------------------------------------------------------------
+# 2. Write the optimized init script
+#    Instead of spinning up a brand new Haraka service daemon (which causes conflicts),
+#    this script modifies the existing core Haraka templates/configs right before they start.
+# ------------------------------------------------------------------
+RUN printf '%s\n' \
+    '#!/bin/sh' \
+    '' \
+    '# ---- Disable auto-blocking for SMTP (port 25) ----' \
+    'echo "[main]" > /opt/haraka-smtp/config/block_bad_connections.ini' \
+    'echo "enabled=false" >> /opt/haraka-smtp/config/block_bad_connections.ini' \
+    '' \
+    '# ---- Disable auto-blocking for Submission (port 587) ----' \
+    'echo "[main]" > /opt/haraka-submission/config/block_bad_connections.ini' \
+    'echo "enabled=false" >> /opt/haraka-submission/config/block_bad_connections.ini' \
+    '' \
+    '# ---- Dynamically handle Custom SMTPS Port Settings ----' \
+    '# If MAIL_SMTPS_HOST_PORT is set and is different from the default 465,' \
+    '# we explicitly update Haraka settings or clear out conflicts.' \
+    'TARGET_PORT=${MAIL_SMTPS_HOST_PORT:-465}' \
+    '' \
+    '# Safely disable noisy plugins in the native profiles if needed' \
+    'for profile in smtp submission; do' \
+    '    if [ -f "/opt/haraka-$profile/config/plugins" ]; then' \
+    '        sed -i "/^known-senders/d" /opt/haraka-$profile/config/plugins 2>/dev/null || true' \
+    '        sed -i "/^guard/d"         /opt/haraka-$profile/config/plugins 2>/dev/null || true' \
+    '        sed -i "/^limit/d"         /opt/haraka-$profile/config/plugins 2>/dev/null || true' \
+    '    fi' \
+    'done' \
+    '' \
+    'echo "✅ Native configuration tweaked successfully. No port conflicts generated."' \
+    > /etc/cont-init.d/99-disable-blocking.sh
+
+RUN chmod +x /etc/cont-init.d/99-disable-blocking.sh
+
+# ------------------------------------------------------------------
+# 3. Clean up the conflicting custom s6 service definition
+#    We remove it entirely because native Poste.io handles 465 elegantly.
+# ------------------------------------------------------------------
+RUN rm -rf /etc/services.d/haraka-smtps
