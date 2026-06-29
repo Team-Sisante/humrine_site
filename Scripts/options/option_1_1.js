@@ -11,5 +11,4 @@ module.exports = async function (helpers) {
   runCommand(localDevDetachedCommand);
   
   console.log('✅ Web container started.');  
-  await pause();
 };
