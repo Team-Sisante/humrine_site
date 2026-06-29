@@ -56,7 +56,7 @@ services:
   # Mail server (web-dev depends on this)
   mail-test:
     container_name: humrine_mail
-    image: ghcr.io/team-sisante/badminton_court-mail:latest  # use same Poste.io image
+    image: ghcr.io/team-sisante/humrine_site-mail:latest
     restart: unless-stopped
     ports:
       - "${MAIL_SMTP_HOST_PORT:-25}:25"
