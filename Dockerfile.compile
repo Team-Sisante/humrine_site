@@ -20,7 +20,7 @@ RUN echo "📦 Installing Python dependencies..." && pip install --no-cache-dir 
 
 # ---- Pre‑import blog.templatetags to ensure PyInstaller sees it ----
 # Set all required environment variables so settings.base can import
-RUN export DJANGO_SETTINGS_MODULE=humrine_site.settings.base \
+RUN export DJANGO_SETTINGS_MODULE=humrine_site.settings \
     && export ENVIRONMENT=development \
     && export SECRET_KEY=dummy \
     && export DEBUG=False \
@@ -48,7 +48,7 @@ RUN export DJANGO_SETTINGS_MODULE=humrine_site.settings.base \
 # ---- Compile the binary ----
 RUN export PYINSTALLER_BUILD=true \
     && export ENVIRONMENT=development \
-    && export DJANGO_SETTINGS_MODULE=humrine_site.settings.base \
+    && export DJANGO_SETTINGS_MODULE=humrine_site.settings \
     && export DEBUG=False \
     && export SECRET_KEY=build-key-for-pyinstaller \
     && export DATABASE_URL=sqlite:///tmp/dummy.db \
