@@ -1,0 +1,41 @@
+# Dockerfile.cypress
+FROM cypress/included:15.3.0
+
+# Install FFmpeg for video recording and other dependencies
+RUN apt-get update && apt-get install -y ffmpeg xvfb ca-certificates
+
+# Create SSL certificates directory
+RUN mkdir -p /etc/ssl/certs
+
+# Create a script to handle certificate setup at runtime
+RUN echo '#!/bin/bash\n\
+if [ -f /certs/ca.pem ]; then\n\
+    cp /certs/ca.pem /etc/ssl/certs/ca-posteio.pem\n\
+    update-ca-certificates\n\
+fi\n\
+# Start Xvfb\n\
+Xvfb :99 -screen 0 1920x1080x24 &\n\
+export NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-posteio.pem\n\
+exec "$@"' > /start-cypress.sh && \
+    chmod +x /start-cypress.sh
+
+# Set working directory to /e2e (where Cypress expects to be)
+WORKDIR /e2e
+
+# Remove any existing cypress.json to avoid conflicts
+RUN rm -f cypress.json
+
+# Copy package.json and package-lock.json for dependencies
+# (humrine_site uses npm, not pnpm — badminton_court's version of this
+# Dockerfile uses pnpm-lock.yaml; don't copy that file across by mistake)
+COPY package.json package-lock.json ./
+
+# Install exact dependencies from the lockfile
+RUN npm ci --ignore-scripts
+
+# Copy Cypress configuration and tests to the correct location
+COPY cypress/ ./cypress/
+COPY cypress.config.js ./
+
+# Set the entrypoint to handle certificates and start virtual display
+ENTRYPOINT ["/start-cypress.sh"]

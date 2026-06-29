@@ -1,7 +1,7 @@
-# humrine_site/humrine_site/settings/base.py
+# humrine_site/settings/base.py
 
 """
-Django settings for humrine_site project.
+Base Django settings – common to all environments.
 """
 
 import os
@@ -19,33 +19,6 @@ def get_env_variable(var_name, default=None):
         return default
     raise ImproperlyConfigured(f"Set the {var_name} environment variable")
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = get_env_variable('SECRET_KEY')
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = get_env_variable('DEBUG', 'False').lower() == 'true'
-
-ALLOWED_HOSTS = get_env_variable('ALLOWED_HOSTS', '').split(',')
-if DEBUG:
-    ALLOWED_HOSTS.append('.cloudshell.dev')
-
-CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS if host]
-if DEBUG:
-    CSRF_TRUSTED_ORIGINS.append('https://*.cloudshell.dev')
-
-# ---- ENVIRONMENT detection ----
-if os.getenv('PYINSTALLER_BUILD') == 'true':
-    ENVIRONMENT = 'development'
-else:
-    ENVIRONMENT = os.environ.get('ENVIRONMENT')
-    if not ENVIRONMENT or not ENVIRONMENT.strip():
-        raise ImproperlyConfigured(
-            "CRITICAL CONFIGURATION ERROR: The 'ENVIRONMENT' environment variable "
-            "is missing or blank. Application startup aborted.\n"
-            "Set it to one of: development, docker, staging, production"
-        )
-    ENVIRONMENT = ENVIRONMENT.strip().lower()
-
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -54,7 +27,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'django_bootstrap5',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.twitter',
     'home',
     'pages',
     'affiliate',
@@ -62,6 +42,7 @@ INSTALLED_APPS = [
     'blog',
     'ckeditor',
     'ckeditor_uploader',
+    'engagement',
 ]
 
 MIDDLEWARE = [
@@ -72,6 +53,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'humrine_site.urls'
@@ -83,6 +65,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -93,123 +76,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'humrine_site.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.environ.get('DB_PATH', BASE_DIR / 'db.sqlite3'),
-    }
-}
-
-AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
-]
-
+# Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
-
-# ---- STATIC_ROOT based on ENVIRONMENT ----
-if ENVIRONMENT in ['staging', 'production']:
-    STATIC_ROOT = '/app/staticfiles'
-else:
-    STATIC_ROOT = BASE_DIR / 'staticfiles_local'
-
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# ---- Email / Poste.io configuration ----
-EMAIL_HOST = get_env_variable('EMAIL_HOST', 'mail-production')
-EMAIL_PORT = int(get_env_variable('EMAIL_PORT', '465'))
-EMAIL_HOST_USER = get_env_variable('EMAIL_HOST_USER', 'admin@humrine.com')
-POSTE_ADMIN_PASSWORD = get_env_variable('POSTE_ADMIN_PASSWORD')
-EMAIL_HOST_PASSWORD = POSTE_ADMIN_PASSWORD
-EMAIL_USE_SSL = get_env_variable('EMAIL_USE_SSL', 'True').lower() == 'true'
-if EMAIL_USE_SSL:
-    EMAIL_USE_TLS = False
-else:
-    EMAIL_USE_TLS = get_env_variable('EMAIL_USE_TLS', 'False').lower() == 'true'
-DEFAULT_FROM_EMAIL = get_env_variable('DEFAULT_FROM_EMAIL', 'admin@humrine.com')
-
-INVOLVE_API_KEY = os.environ.get('INVOLVE_API_KEY', '')
-
-CSRF_TRUSTED_ORIGINS += [
-    'https://humrine.com',
-    'https://www.humrine.com',
-    'https://staging.humrine.com',
-    'https://www.staging.humrine.com',
-    'https://app.humrine.com',
-]
-
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-if not DEBUG:
-    SECURE_SSL_REDIRECT = get_env_variable('SECURE_SSL_REDIRECT', 'True').lower() == 'true'
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = int(get_env_variable('SECURE_HSTS_SECONDS', '31536000'))
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.environ.get('MEDIA_ROOT', BASE_DIR / 'media')
-
-# ---- CKEditor configuration ----
-CKEDITOR_UPLOAD_PATH = "uploads/"
-CKEDITOR_IMAGE_BACKEND = "pillow"
-
-CKEDITOR_CONFIGS = {
-    'default': {
-        'toolbar': [
-            ['Source', 'Maximize'],
-            ['Undo', 'Redo'],
-            ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript'],
-            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', 'Blockquote'],
-            ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
-            ['Link', 'Unlink', 'Anchor'],
-            ['Image', 'Table', 'HorizontalRule', 'SpecialChar'],
-            ['Format', 'Font', 'FontSize'],
-            ['TextColor', 'BGColor'],
-            ['RemoveFormat'],
-        ],
-        'height': 400,
-        'width': '100%',
-        'extraPlugins': ','.join(['sourcearea', 'sourcedialog', 'image2', 'uploadimage', 'resize', 'maximize']),
-        'removePlugins': 'image',
-        'sourcearea_plugin': 'sourcedialog',
-        'image2_alignClasses': ['image-left', 'image-center', 'image-right'],
-        'image2_captions': True,
-        'image2_disableResizer': False,
-    },
-    'toons': {
-        'toolbar': [
-            ['Source', 'Maximize'],
-            ['Undo', 'Redo'],
-            ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript'],
-            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', 'Blockquote'],
-            ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
-            ['Link', 'Unlink', 'Anchor'],
-            ['Image', 'Table', 'HorizontalRule', 'SpecialChar'],
-            ['Format', 'Font', 'FontSize'],
-            ['TextColor', 'BGColor'],
-            ['RemoveFormat'],
-        ],
-        'height': 400,
-        'width': '100%',
-        'extraPlugins': ','.join(['sourcearea', 'image2', 'uploadimage', 'resize', 'maximize']),
-        'removePlugins': 'image',
-        'image2_alignClasses': ['image-left', 'image-center', 'image-right'],
-        'image2_captions': True,
-        'image2_disableResizer': False,
-    },
-}
-
-CKEDITOR_BASEPATH = "https://cdn.ckeditor.com/4.22.1/full-all/"

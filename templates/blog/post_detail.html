@@ -51,6 +51,9 @@
                 {{ post.body|safe }}
             </article>
 
+            {# --- Comments & Reactions --- #}
+            {% include "engagement/_comments_reactions.html" %}
+
             {# --- Facebook CTA (Optional – you can remove if already in body) --- #}
             {# This is a dedicated CTA block if you want to add a prominent button #}
             {# The link is already in the body, so you can skip this if you prefer. #}

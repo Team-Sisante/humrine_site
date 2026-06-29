@@ -1,7 +1,119 @@
 # docker-compose.vm.yml – Secrets are injected via environment variables only.
 # The deploy script fetches all configuration from GCP and GitHub.
 
+volumes:
+  postgres_data_staging:
+  postgres_data_production:
+  poste_data_staging:
+  poste_data_production:
+
+networks:
+  humrine-network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1460
+
 services:
+  # ----- Database (staging) -----
+  db-staging:
+    image: postgres:14
+    mem_limit: 128m
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data_staging:/var/lib/postgresql/data/
+    ports:
+      - "${POSTGRES_HOST_PORT}:5432"
+    networks:
+      - humrine-network
+    profiles: [staging]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ----- Database (production) -----
+  db-production:
+    image: postgres:14
+    mem_limit: 128m
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data_production:/var/lib/postgresql/data/
+    ports:
+      - "${POSTGRES_HOST_PORT}:5432"
+    networks:
+      - humrine-network
+    profiles: [production]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ----- Redis (shared by staging + production, same as badminton_court's pattern) -----
+  redis:
+    image: redis:7-alpine
+    mem_limit: 64m
+    ports:
+      - "${REDIS_HOST_PORT}:6379"
+    networks:
+      - humrine-network
+    profiles: [staging, production]
+
+  # ----- Mail (staging) -----
+  mail-staging:
+    image: ghcr.io/team-sisante/badminton_court-mail:${IMAGE_TAG:-latest}  # same Poste.io image humrine's dev compose already uses
+    restart: unless-stopped
+    mem_limit: 512m
+    ports:
+      - "${MAIL_SMTP_HOST_PORT}:25"
+      - "${MAIL_SUBMISSION_HOST_PORT}:587"
+      - "${MAIL_SMTPS_HOST_PORT}:465"
+      - "${MAIL_HTTPS_HOST_PORT}:443"
+    environment:
+      - HTTPS=ON
+    volumes:
+      - poste_data_staging:/data
+    networks:
+      - humrine-network
+    profiles: [staging]
+    healthcheck:
+      test: ["CMD", "nc", "-zv", "localhost", "25"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 60s
+
+  # ----- Mail (production) -----
+  mail-production:
+    image: ghcr.io/team-sisante/badminton_court-mail:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    mem_limit: 512m
+    ports:
+      - "${MAIL_SMTP_HOST_PORT}:25"
+      - "${MAIL_SUBMISSION_HOST_PORT}:587"
+      - "${MAIL_SMTPS_HOST_PORT}:465"
+      - "${MAIL_HTTPS_HOST_PORT}:443"
+    environment:
+      - HTTPS=ON
+    volumes:
+      - poste_data_production:/data
+    networks:
+      - humrine-network
+    profiles: [production]
+    healthcheck:
+      test: ["CMD", "nc", "-zv", "localhost", "25"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 60s
+
   web-staging:
     container_name: humrine-web-staging
     image: ghcr.io/team-sisante/humrine_site-web:${IMAGE_TAG:-latest}
@@ -98,6 +210,13 @@ services:
     volumes:
       - ./data:/app/data
       - ./staticfiles:/app/staticfiles
+    depends_on:
+      db-staging:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      mail-staging:
+        condition: service_started
     networks:
       - humrine-network
     profiles:
@@ -120,6 +239,36 @@ services:
       - humrine-network
     profiles:
       - staging
+
+  # ----- Cypress E2E tests against staging (on-demand, not auto-run) -----
+  cypress-staging:
+    container_name: humrine-cypress-staging
+    build:
+      context: .
+      dockerfile: Dockerfile.cypress
+    volumes:
+      - ./cypress:/e2e/cypress
+      - ./cypress.config.js:/e2e/cypress.config.js
+      - ./cypress/videos:/e2e/cypress/videos
+      - ./cypress/screenshots:/e2e/cypress/screenshots
+      - ./scripts:/e2e/scripts
+      - ./certs:/certs:ro
+    environment:
+      - DOCKER_CONTAINER=true
+      - CYPRESS_BASEURL=${CYPRESS_BASEURL}
+      - CYPRESS_HEADED=${CYPRESS_HEADED}
+      - POSTE_API_HOST=${POSTE_PROTOCOL}://${POSTE_HOSTNAME}:${POSTE_PORT}
+      - POSTE_API_USER=${POSTE_API_USER}
+      - POSTE_ADMIN_PASSWORD=${POSTE_ADMIN_PASSWORD}
+    depends_on:
+      web-staging:
+        condition: service_started
+      mail-staging:
+        condition: service_healthy
+    networks:
+      - humrine-network
+    profiles:
+      - staging-test
 
   web-production:
     container_name: humrine-web-production
@@ -217,6 +366,13 @@ services:
     volumes:
       - ./data:/app/data
       - ./staticfiles:/app/staticfiles
+    depends_on:
+      db-production:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      mail-production:
+        condition: service_started
     networks:
       - humrine-network
     profiles:
@@ -240,8 +396,32 @@ services:
     profiles:
       - production
 
-networks:
-  humrine-network:
-    driver: bridge
-    driver_opts:
-      com.docker.network.driver.mtu: 1460
+  # ----- Cypress E2E tests against production (on-demand, not auto-run) -----
+  cypress-production:
+    container_name: humrine-cypress-production
+    build:
+      context: .
+      dockerfile: Dockerfile.cypress
+    volumes:
+      - ./cypress:/e2e/cypress
+      - ./cypress.config.js:/e2e/cypress.config.js
+      - ./cypress/videos:/e2e/cypress/videos
+      - ./cypress/screenshots:/e2e/cypress/screenshots
+      - ./scripts:/e2e/scripts
+      - ./certs:/certs:ro
+    environment:
+      - DOCKER_CONTAINER=true
+      - CYPRESS_BASEURL=${CYPRESS_BASEURL}
+      - CYPRESS_HEADED=${CYPRESS_HEADED}
+      - POSTE_API_HOST=${POSTE_PROTOCOL}://${POSTE_HOSTNAME}:${POSTE_PORT}
+      - POSTE_API_USER=${POSTE_API_USER}
+      - POSTE_ADMIN_PASSWORD=${POSTE_ADMIN_PASSWORD}
+    depends_on:
+      web-production:
+        condition: service_started
+      mail-production:
+        condition: service_healthy
+    networks:
+      - humrine-network
+    profiles:
+      - production-test

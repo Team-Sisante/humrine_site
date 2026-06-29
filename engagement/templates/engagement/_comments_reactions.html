@@ -1,0 +1,57 @@
+{# templates/engagement/_comments_reactions.html #}
+{# Include in any blog/toons detail template with: #}
+{# {% include "engagement/_comments_reactions.html" %} #}
+{% load static engagement_extras %}
+
+<link rel="stylesheet" href="{% static 'engagement/css/engagement.css' %}">
+
+<div class="engagement-section"
+     data-app-label="{{ engagement_app_label }}"
+     data-model-name="{{ engagement_model_name }}"
+     data-object-id="{{ engagement_object_id }}">
+
+    {# --- Reactions --- #}
+    <div class="engagement-reactions mb-4">
+        {% for code, emoji in reaction_choices %}
+            <button type="button"
+                    class="btn btn-sm reaction-btn{% if user_reaction == code %} active{% endif %}"
+                    data-reaction-type="{{ code }}"
+                    {% if not request.user.is_authenticated %}data-requires-login="1"{% endif %}>
+                {{ emoji }} <span class="reaction-count">{{ reaction_counts|get_item:code }}</span>
+            </button>
+        {% endfor %}
+        {% if not request.user.is_authenticated %}
+            <p class="text-muted small mt-2 mb-0">
+                <a href="/accounts/login/?next={{ request.path }}">Log in</a> to react and comment.
+            </p>
+        {% endif %}
+    </div>
+
+    {# --- Comments --- #}
+    <div class="engagement-comments">
+        <h5>{{ comments|length }} Comment{{ comments|length|pluralize }}</h5>
+
+        {% if request.user.is_authenticated %}
+            <form class="comment-form mb-3" method="post"
+                  action="{% url 'engagement:add_comment' engagement_app_label engagement_model_name engagement_object_id %}">
+                {% csrf_token %}
+                {{ comment_form.body }}
+                <button type="submit" class="btn btn-primary btn-sm mt-2">Post Comment</button>
+            </form>
+        {% endif %}
+
+        <ul class="list-unstyled comment-list">
+            {% for comment in comments %}
+                <li class="comment-item mb-3">
+                    <strong>{{ comment.author }}</strong>
+                    <span class="text-muted small">{{ comment.created_at|date:"M j, Y g:i A" }}</span>
+                    <p class="mb-0">{{ comment.body }}</p>
+                </li>
+            {% empty %}
+                <li class="text-muted">No comments yet — be the first!</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<script src="{% static 'engagement/js/engagement.js' %}"></script>
