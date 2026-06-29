@@ -55,5 +55,4 @@ module.exports = async function(helpers) {
     console.log('\x1b[31mAn unexpected error occurred during GitHub authentication.\x1b[0m');
     console.log(`\x1b[31m${unexpectedError.message}\x1b[0m`);
   }
-  await pause();
 };

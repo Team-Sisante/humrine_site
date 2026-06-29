@@ -1,83 +1,51 @@
-# How to apply this
+# What's in this delivery, and where it goes
 
-Everything mirrors your real repo's folder structure.
+This covers what was outstanding after your last commit — checked file-by-file
+against what's actually in `xmione/humrine-site-debug` right now, not assumed.
 
-## A. Bug fixes (drop in, replacing the existing file)
-- `manage.py`, `humrine_site/wsgi.py`, `humrine_site/asgi.py` — wrong default settings module (root cause of `AppRegistryNotReady`)
-- `humrine_site/settings/static.py` — fixes the `ENVIRONMENT` import
-- `humrine_site/settings/base.py` — restores `INSTALLED_APPS` (now including `allauth.*` — see below), adds `'engagement'`, uncomments `allauth.account.middleware.AccountMiddleware`
-- `humrine_site/settings/__init__.py` — removes the `ROOT_URLCONF` override that was silently disabling all real routing
-- `humrine_site/urls.py` — dead import removed, `toons`/`engagement`/`home`/`accounts` (allauth) all wired in
+## In `humrine-site-debug`
 
-⚠️ **Diff `base.py` and `urls.py` against your current files** before overwriting.
+- **`humrine_site/image_utils.py`** (new) — shared resize helper.
+- **`blog/models.py`** — `Post` and `PostImage` now auto-downscale to
+  `IMAGE_MAX_WIDTH = 1200` on save. Preserves aspect ratio and format
+  (JPEG stays JPEG with quality=85; PNG transparency is preserved, not
+  flattened). Safe to re-save repeatedly — no-ops once already small enough.
+- **`toons/models.py`** — `ToonPanel` now auto-downscales to
+  `IMAGE_MAX_WIDTH = 800` (the webtoon-standard width from earlier).
+- **`blog/tests.py`** / **`toons/tests.py`** — 7 new tests covering: downscale
+  happens, small images untouched, idempotent re-save, PNG transparency
+  preserved, PostImage (gallery) field also covered. All passing alongside
+  the existing 11 `engagement` tests (18/18).
+- **`toons/migrations/__init__.py` + `0001_initial.py`** — resolves the
+  migration gap flagged earlier (missing `__init__.py`, orphaned `0003`
+  depending on a nonexistent `0002`). Generated fresh from current
+  `models.py`, confirmed it applies cleanly via `migrate`.
+  **Please read this carefully before applying:** this assumes the old,
+  broken `0003` migration was never actually applied against a real
+  database anywhere (dev-only, disposable data). If `0003` *is* already
+  applied somewhere with real data riding on it, this is the wrong fix —
+  say so before you copy this in, and I'll work out a different path
+  (writing real `0001`/`0002` migrations that match what's already applied).
+- **`humrine_site/settings/social_auth.py`** — replaced 3 deprecated
+  allauth settings (`ACCOUNT_EMAIL_REQUIRED`, `ACCOUNT_USERNAME_REQUIRED`,
+  `ACCOUNT_AUTHENTICATION_METHOD`) with their current equivalents
+  (`ACCOUNT_LOGIN_METHODS`, `ACCOUNT_SIGNUP_FIELDS`). Found as warnings
+  while testing, not something you'd already been told about.
+- **`docker-compose.vm.yml`** — this is the db/redis/mail/cypress version
+  from a few turns ago. It didn't make it into your last commit (the repo
+  still had the original 4-service file) — re-applying it here.
 
-## A.1 — NEW this round: allauth is now actually enabled
-This is what was causing `RuntimeError: Model class allauth.account.models.EmailAddress
-doesn't declare an explicit app_label...` on `/admin/login/`. `AUTHENTICATION_BACKENDS`
-referenced allauth's backend while `allauth.*` sat commented out of `INSTALLED_APPS` —
-neither off nor on. Confirmed fixed: `/admin/login/` now returns `200` in my sandbox.
+## In `gocd-server` (separate repo)
 
-**Install these 4 packages first** (see `requirements-additions.txt` — these aren't
-hard dependencies of `django-allauth` itself, they're needed by the specific
-providers you have configured):
-```
-PyJWT==2.13.0
-cryptography==49.0.0
-oauthlib==3.3.1
-requests-oauthlib==2.0.0
-```
-Discovered one at a time by actually running `migrate` and fixing each
-`ModuleNotFoundError` as it appeared — `jwt` (Google), then `cryptography`
-(Google's JWT verification), then `oauthlib`/`requests-oauthlib` (Twitter's
-OAuth1 flow).
+- **`Scripts/deploy.js`** — the Cypress build-context copy patch, same as
+  before. This also didn't make it into your last commit. Re-confirmed
+  syntax-valid with `node --check`, and re-confirmed it's a no-op for
+  badminton_court's deploys (missing `scripts/` dir there, same as before).
 
-Then:
-```
-pip install -r requirements.txt   # after adding the 4 lines above
-python manage.py migrate          # applies allauth's own account.* and socialaccount.* tables
-```
-
-## ⚠️ Still no social signup buttons after this — here's why, and what's left
-Enabling the apps isn't sufficient. I tested `/accounts/signup/` and it now
-crashes with `allauth.socialaccount.models.SocialApp.DoesNotExist` — there's
-no actual Google/Facebook/Twitter OAuth app registered anywhere yet. This is
-the one piece I genuinely can't do for you, since it needs real credentials
-from each provider's developer console. Two ways to register them once you
-have the Client ID/Secret for each:
-
-**Option 1 — Django admin (simplest, no code change):**
-1. `python manage.py createsuperuser`
-2. Log into `/admin/`, go to **Social Applications** → **Add**
-3. For each provider: pick the provider, paste Client ID + Secret, add your Site
-
-**Option 2 — settings-driven (better for Docker/env-var workflow this project already uses):**
-Add an `'APP'` key to each provider in `social_auth.py`'s `SOCIALACCOUNT_PROVIDERS`:
-```python
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': ['profile', 'email'],
-        'AUTH_PARAMS': {'access_type': 'online'},
-        'APP': {
-            'client_id': get_env_variable('GOOGLE_CLIENT_ID'),
-            'secret': get_env_variable('GOOGLE_CLIENT_SECRET'),
-            'key': '',
-        },
-    },
-    # ... same 'APP' pattern for 'facebook' and 'twitter'
-}
-```
-I'm inferring `GOOGLE_CLIENT_ID`/`FACEBOOK_CLIENT_ID`/`TWITTER_CLIENT_ID` as the
-likely paired env var names (your env files already had `*_CLIENT_SECRET` for
-all three) — verify the actual names in your real `.env` files before using this.
-
-## B. New / extended app code (the comment/reaction feature) — unchanged this round
-See previous README content: `toons/` restoration, `blog/views.py`, the two
-templates, and the full `engagement/` app including `tests.py` (11 passing tests).
-
-## ⚠️ Still NOT fixed: `toons/migrations/` gap
-Unchanged from before — missing `__init__.py` plus missing `0001`/`0002`. See
-prior notes; confirmed via `/toons/` → `OperationalError: no such table`.
-
-## ⚠️ Still outstanding (cosmetic): `/health/` route shadowing
-`home.urls`'s plain-text `health/` still sits ahead of your JSON
-`HealthCheckView` in `urls.py`. Unchanged from before.
+## Already correctly committed — not re-delivered
+`manage.py`/`wsgi.py`/`asgi.py` settings module fix, `static.py` ENVIRONMENT
+import, `base.py` INSTALLED_APPS + middleware, `__init__.py` ROOT_URLCONF
+removal, `urls.py` wiring, the full `toons` app restoration, the full
+`engagement` app, `requirements.txt` additions, and `Dockerfile.cypress`
+(correctly using npm, not badminton_court's pnpm) are all already in the
+repo as committed. Verified by re-cloning and checking, not assumed.

@@ -5,6 +5,8 @@ from django.conf import settings  # <-- use this instead of User import
 from django.utils.text import slugify
 # from ckeditor.fields import RichTextField
 
+from humrine_site.image_utils import resize_image_field
+
 class ToonStory(models.Model):
     title = models.CharField(max_length=200)
     slug = models.SlugField(unique=True, max_length=200, blank=True)
@@ -32,6 +34,8 @@ class ToonStory(models.Model):
 
 
 class ToonPanel(models.Model):
+    IMAGE_MAX_WIDTH = 800  # see task notes: standard webtoon panel width
+
     story = models.ForeignKey(ToonStory, on_delete=models.CASCADE, related_name='panels')
     image = models.ImageField(upload_to='toons/')
     order = models.PositiveSmallIntegerField(default=0)
@@ -39,6 +43,10 @@ class ToonPanel(models.Model):
 
     class Meta:
         ordering = ['order']
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        resize_image_field(self.image, self.IMAGE_MAX_WIDTH)
 
     def __str__(self):
         return f"{self.story.title} - Panel {self.order}"

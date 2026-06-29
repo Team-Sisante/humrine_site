@@ -241,11 +241,6 @@ services:
       - staging
 
   # ----- Cypress E2E tests against staging (on-demand, not auto-run) -----
-  # NOTE: needs `Dockerfile.cypress`, `cypress/`, `cypress.config.js`, `scripts/`
-  # present in the build context. deploy.js currently only SCPs the compose
-  # file + nginx confs + certs to the VM — it will need to also copy these
-  # (or this service switched to a pre-built ghcr.io image) for `build:` to
-  # actually work on the VM. See chat notes.
   cypress-staging:
     container_name: humrine-cypress-staging
     build:
