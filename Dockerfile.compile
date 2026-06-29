@@ -12,6 +12,7 @@ COPY toons/                  ./toons/
 COPY blog/                   ./blog/
 COPY templates/              ./templates/
 COPY static/                 ./static/
+COPY engagement/             ./engagement/
 COPY manage.py               .
 COPY requirements.txt        .
 
@@ -110,6 +111,7 @@ RUN export PYINSTALLER_BUILD=true \
         --collect-all blog \
         --collect-all ckeditor \
         --collect-all ckeditor_uploader \
+        --collect-all engagement \
         --hidden-import blog \
         --hidden-import blog.models \
         --hidden-import blog.templatetags \
