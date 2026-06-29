@@ -3,6 +3,9 @@
 from django.views.generic import ListView, DetailView
 from django.shortcuts import get_object_or_404
 
+from engagement.mixins import EngagementContextMixin
+
+
 class PostListView(ListView):
     template_name = 'blog/post_list.html'
     context_object_name = 'posts'
@@ -12,7 +15,7 @@ class PostListView(ListView):
         return Post.objects.all().order_by('-published')
 
 
-class PostDetailView(DetailView):
+class PostDetailView(EngagementContextMixin, DetailView):
     template_name = 'blog/post_detail.html'
     context_object_name = 'post'
 

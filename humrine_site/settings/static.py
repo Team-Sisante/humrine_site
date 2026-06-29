@@ -5,7 +5,8 @@ Static and media files configuration
 """
 
 import os
-from .base import BASE_DIR, ENVIRONMENT
+from .base import BASE_DIR
+from .security import ENVIRONMENT
 
 STATIC_URL = 'static/'
 

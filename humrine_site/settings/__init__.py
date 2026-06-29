@@ -15,7 +15,6 @@ from .static import *
 from .ckeditor import *
 
 # ---- Temporary override for migrations ----
-ROOT_URLCONF = 'humrine_site.urls_migration'
 
 # SSL Certificate Configuration (for Windows compatibility)
 import os

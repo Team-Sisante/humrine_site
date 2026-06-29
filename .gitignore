@@ -42,3 +42,4 @@ data/backups/
 
 dist_linux/
 postgres_data/
+env.passphrase.txt

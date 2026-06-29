@@ -38,8 +38,10 @@ urlpatterns = [
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
     path('robots.txt', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
     path('ads.txt', TemplateView.as_view(template_name='ads.txt', content_type='text/plain')),
-    # path('toons/', include('toons.urls')),
+    path('toons/', include('toons.urls')),
     path('blog/', include('blog.urls')),
+    path('engagement/', include('engagement.urls')),
+    path('', include('home.urls')),
     # path('ckeditor/', include('ckeditor_uploader.urls')),
     path('health/', HealthCheckView.as_view(), name='health_check'),
     # path('accounts/', include('allauth.urls')),
@@ -49,8 +51,6 @@ urlpatterns = [
 is_migration = any('makemigrations' in arg or 'migrate' in arg for arg in sys.argv)
 if not is_migration:
     # These imports are only evaluated when the server is running
-    from . import urls_affiliate  # optional: but we'll just inline
-    # Actually, we need a lazy way. We'll use a function.
     def get_deal_list_view():
         from affiliate.views import DealListView
         return DealListView.as_view()

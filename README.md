@@ -1,74 +1,83 @@
-# Humrine Site
+# How to apply this
 
-The central hub and landing page for Humrine's suite of innovative management solutions.
+Everything mirrors your real repo's folder structure.
 
-## Overview
+## A. Bug fixes (drop in, replacing the existing file)
+- `manage.py`, `humrine_site/wsgi.py`, `humrine_site/asgi.py` — fix the wrong
+  default settings module (root cause of `AppRegistryNotReady`)
+- `humrine_site/settings/static.py` — fixes the `ENVIRONMENT` import
+- `humrine_site/settings/base.py` — restores `INSTALLED_APPS`, adds `'engagement'`
+- `humrine_site/settings/__init__.py` — removes the `ROOT_URLCONF` override that
+  was silently disabling ALL real routing, site-wide, all the time
+- `humrine_site/urls.py` — removes a dead import, uncomments `toons`, adds
+  `engagement` AND `home` (`path('', include('home.urls'))` — this is what
+  fixes the `/` 404)
 
-Humrine Site is a Django-powered web application that serves as the primary gateway to other specialized applications like the **Badminton Court Management System** and **PaySol Payroll Solutions**. It is designed with a modern, responsive aesthetic featuring glassmorphism and smooth animations.
+⚠️ **Diff `base.py` against your current file** before overwriting — I
+restored `INSTALLED_APPS` from your `base.py.bak`, kept `allauth.*` commented
+out (separate issue, see below), and added `'engagement'`.
 
-## Key Features
+⚠️ **`/health/` now resolves to a different view than before.** `home.urls`
+also defines a `health/` route (plain-text `"OK"`), and it now sits ahead of
+your original `path('health/', HealthCheckView.as_view(), ...)` (JSON
+`{"status": "ok"}`) — so the JSON one is currently unreachable dead code.
+Harmless unless something external expects that exact JSON shape. Fix by
+either deleting `home/urls.py`'s `health/` line, or reordering `urls.py`.
 
-- **Modern Landing Page**: A visually appealing homepage built with custom CSS gradients and glassmorphism effects.
-- **Application Hub**: Direct, streamlined access to the Humrine ecosystem:
-  - [Badminton Court Management](/badminton_court)
-  - [PaySol Payroll Solutions](/pay-sol)
-- **Responsive Design**: Fully optimized for mobile, tablet, and desktop using Bootstrap 5.
-- **Unified Configuration**: Uses environment-driven settings via `.env` files for seamless management across development, staging, and production environments.
+## B. New / extended app code (the feature)
+- `toons/__init__.py`, `apps.py`, `admin.py`, `views.py`, `urls.py`, `tests.py`
+  — restored from `toons_temp/` (NOT migrations — see below)
+- `blog/views.py` — adds the engagement mixin to `PostDetailView`
+- `templates/blog/post_detail.html`, `templates/toons/story_detail.html` —
+  one new `{% include %}` line each
+- `engagement/` — the full new app, **including `tests.py`** (11 test cases —
+  see "Tests" below)
 
-## Technology Stack
+After copying these in:
+```
+python manage.py migrate
+python manage.py test engagement
+```
 
-- **Backend**: Django 6.x (Python)
-- **Frontend**: Bootstrap 5, Custom Vanilla CSS
-- **Environment Management**: python-dotenv
-- **Database**: SQLite (Development) / PostgreSQL (Production ready)
+## Tests
+`engagement/tests.py` has 11 cases, all passing against a clean DB in my
+sandbox: anonymous users blocked from commenting/reacting, comment creation
+and rendering, hidden comments excluded, empty comments rejected, reaction
+create/toggle-off/switch-type behavior, invalid reaction type rejected, two
+users reacting independently. `toons/tests.py` is still just Django's default
+empty boilerplate — I didn't add toon-specific tests since I didn't change
+toons' own behavior, only restored its missing files.
 
-## Getting Started
+**Caveat:** these pass in an isolated sandbox (fresh sqlite, dummy env vars).
+I have not run them against your actual local environment, real database, or
+Docker setup — please run `python manage.py test engagement` yourself after
+applying these files and tell me if anything differs.
 
-### Prerequisites
+## ⚠️ NOT included / NOT fixed: `toons/migrations/`
+Two stacked problems, confirmed by reproduction (`/toons/` → `OperationalError:
+no such table: toons_toonstory`):
+1. `toons/migrations/` is missing `__init__.py` — Django doesn't even
+   recognize it as a migrations package (`showmigrations toons` → `(no
+   migrations)`), so `migrate` silently skips it with no error.
+2. Once `__init__.py` exists, the real gap shows up: only `0003_...py` exists,
+   and it depends on a `0002_alter_toonstory_description` that doesn't exist —
+   `0001` and `0002` are both missing.
 
-- Python 3.12+
-- pip
+Check your actual local repo first — they may exist there and just didn't
+make it into this mirror. If they're genuinely gone and this is dev-only with
+disposable data:
+```bash
+touch toons/migrations/__init__.py
+rm toons/migrations/0003_alter_toonpanel_order_alter_toonstory_description_and_more.py
+python manage.py makemigrations toons
+python manage.py migrate
+```
 
-### Local Development Setup
-
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/xmione/humrine_site.git
-   cd humrine_site
-   ```
-
-2. **Set up virtual environment**:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-   ```
-
-3. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Configure Environment**:
-   - Create a `.env` file based on the appropriate template (e.g., `.env.dev.template`).
-   - Fill in all required environment variables, including `SECRET_KEY` and database credentials.
-
-5. **Run Migrations**:
-   ```bash
-   python manage.py migrate
-   ```
-
-6. **Start the server**:
-   ```bash
-   python manage.py runserver
-   ```
-
-## Project Structure
-
-- `home/`: Main application logic and views.
-- `humrine_site/settings/`: Unified settings in `base.py`.
-- `templates/`: Global and app-specific templates.
-- `Docs/`: Project documentation and plans.
-
-## License
-
-Private Repository - © 2026 Humrine.
+## ⚠️ NOT fixed: allauth / login
+`AUTHENTICATION_BACKENDS` references `allauth.account.auth_backends.AuthenticationBackend`,
+but `allauth.*` is commented out of `INSTALLED_APPS`. As configured, this
+breaks **all** login, site-wide (confirmed during testing). Either remove
+that line from `AUTHENTICATION_BACKENDS` until allauth is properly installed,
+or actually install it (apps back in `INSTALLED_APPS`, run its migrations,
+uncomment `path('accounts/', include('allauth.urls'))`, add
+`allauth.account.middleware.AccountMiddleware` to `MIDDLEWARE`).
