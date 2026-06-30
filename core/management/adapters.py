@@ -34,6 +34,29 @@ aeropace.com"""
         from django.core.mail import EmailMessage
         return EmailMessage(subject, message, settings.DEFAULT_FROM_EMAIL, [email], headers=headers)
 
+    def _check_profile_completion(self, request, url):
+        """
+        Previously called by CustomSocialAccountAdapter.get_login_redirect_url
+        but didn't exist — every social login redirect would have raised
+        AttributeError. Added as part of the profiles app (see profiles/
+        models.py for what "complete" means).
+
+        No `profile_next` is set here deliberately: this only fires right
+        after login, when there's no specific action-in-progress to return
+        to afterward (unlike profiles.decorators.require_completed_profile,
+        which guards a specific action and does set it). complete_profile
+        falls back to the dashboard on its own when profile_next is absent.
+        """
+        if not request.user.is_authenticated:
+            return url
+
+        from profiles.models import Profile
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+        if not profile.profile_complete:
+            from django.urls import reverse
+            return reverse('profiles:complete_profile')
+        return url
+
 
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
     def pre_social_login(self, request, sociallogin):

@@ -1,0 +1,91 @@
+<!-- templates/profiles/dashboard.html -->
+
+{% extends "base.html" %}
+
+{% block title %}My Activity – Humrine{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+
+    {% if not profile.profile_complete %}
+    <div class="alert alert-info d-flex justify-content-between align-items-center">
+        <span>Complete your profile to comment and react to posts.</span>
+        <a href="{% url 'profiles:complete_profile' %}" class="btn btn-sm btn-primary">Complete Profile</a>
+    </div>
+    {% endif %}
+
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="d-flex align-items-center gap-3">
+                {% if profile.avatar %}
+                    <img src="{{ profile.avatar.url }}" alt="" class="rounded-circle" width="64" height="64" style="object-fit: cover;">
+                {% else %}
+                    <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white" style="width:64px;height:64px;">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                {% endif %}
+                <div>
+                    <h2 class="mb-0">{{ profile.display_name|default:"My Activity" }}</h2>
+                    {% if profile.bio %}<p class="text-muted small mb-0">{{ profile.bio }}</p>{% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+            <a href="{% url 'profiles:complete_profile' %}" class="btn btn-outline-secondary btn-sm">Edit Profile</a>
+            <a href="{% url 'account_logout' %}" class="btn btn-outline-secondary btn-sm">Log Out</a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <div class="fs-3 fw-bold">{{ comment_count }}</div>
+                    <div class="text-muted small">Comments</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <div class="fs-3 fw-bold">{{ reaction_count }}</div>
+                    <div class="text-muted small">Reactions</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <h5>Recent Comments</h5>
+            {% for comment in comments %}
+                <div class="card mb-2">
+                    <div class="card-body py-2">
+                        <a href="{{ comment.content_object.get_absolute_url }}" class="small fw-bold text-decoration-none">{{ comment.content_object }}</a>
+                        <p class="mb-1">{{ comment.body|truncatewords:25 }}</p>
+                        <span class="text-muted small">{{ comment.created_at|date:"M j, Y" }}</span>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-muted">No comments yet. <a href="{% url 'blog_list' %}">Browse the blog</a> or <a href="{% url 'story_list' %}">read some toons</a> to get started.</p>
+            {% endfor %}
+        </div>
+        <div class="col-md-6">
+            <h5>Recent Reactions</h5>
+            {% for reaction in reactions %}
+                <div class="card mb-2">
+                    <div class="card-body py-2 d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="fs-5">{{ reaction.get_reaction_type_display }}</span>
+                            <a href="{{ reaction.content_object.get_absolute_url }}" class="small fw-bold text-decoration-none ms-2">{{ reaction.content_object }}</a>
+                        </div>
+                        <span class="text-muted small">{{ reaction.created_at|date:"M j, Y" }}</span>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-muted">No reactions yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

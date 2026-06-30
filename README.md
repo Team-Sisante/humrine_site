@@ -1,51 +1,79 @@
-# What's in this delivery, and where it goes
+# Phase 1 — How to apply this
 
-This covers what was outstanding after your last commit — checked file-by-file
-against what's actually in `xmione/humrine-site-debug` right now, not assumed.
+All new files (entire `profiles/` app) — just copy the whole folder in.
+Modified files — diff against your current versions before overwriting.
 
-## In `humrine-site-debug`
+## New: `profiles/` app (entire folder)
+Model, decorator, signal, views, forms, admin, templates, migration, and
+**16 committed tests** (`profiles/tests.py`) — all passing. Pulled forward
+from the Phase 6 plan since they test Phase 1 code specifically.
 
-- **`humrine_site/image_utils.py`** (new) — shared resize helper.
-- **`blog/models.py`** — `Post` and `PostImage` now auto-downscale to
-  `IMAGE_MAX_WIDTH = 1200` on save. Preserves aspect ratio and format
-  (JPEG stays JPEG with quality=85; PNG transparency is preserved, not
-  flattened). Safe to re-save repeatedly — no-ops once already small enough.
-- **`toons/models.py`** — `ToonPanel` now auto-downscales to
-  `IMAGE_MAX_WIDTH = 800` (the webtoon-standard width from earlier).
-- **`blog/tests.py`** / **`toons/tests.py`** — 7 new tests covering: downscale
-  happens, small images untouched, idempotent re-save, PNG transparency
-  preserved, PostImage (gallery) field also covered. All passing alongside
-  the existing 11 `engagement` tests (18/18).
-- **`toons/migrations/__init__.py` + `0001_initial.py`** — resolves the
-  migration gap flagged earlier (missing `__init__.py`, orphaned `0003`
-  depending on a nonexistent `0002`). Generated fresh from current
-  `models.py`, confirmed it applies cleanly via `migrate`.
-  **Please read this carefully before applying:** this assumes the old,
-  broken `0003` migration was never actually applied against a real
-  database anywhere (dev-only, disposable data). If `0003` *is* already
-  applied somewhere with real data riding on it, this is the wrong fix —
-  say so before you copy this in, and I'll work out a different path
-  (writing real `0001`/`0002` migrations that match what's already applied).
-- **`humrine_site/settings/social_auth.py`** — replaced 3 deprecated
-  allauth settings (`ACCOUNT_EMAIL_REQUIRED`, `ACCOUNT_USERNAME_REQUIRED`,
-  `ACCOUNT_AUTHENTICATION_METHOD`) with their current equivalents
-  (`ACCOUNT_LOGIN_METHODS`, `ACCOUNT_SIGNUP_FIELDS`). Found as warnings
-  while testing, not something you'd already been told about.
-- **`docker-compose.vm.yml`** — this is the db/redis/mail/cypress version
-  from a few turns ago. It didn't make it into your last commit (the repo
-  still had the original 4-service file) — re-applying it here.
+## Modified
+- **`humrine_site/settings/base.py`** — added `'profiles'` to `INSTALLED_APPS`
+  (after `engagement`, before `core` — `core`'s adapter now imports from
+  `profiles`, so it needs to come after).
+- **`humrine_site/urls.py`** — added `path('', include('profiles.urls'))`.
+  Confirmed no collision with `home.urls`'s own `''` registration — `/`,
+  `/blog/`, `/toons/` all still resolve correctly; `profiles.urls` only
+  defines `dashboard/` and `profile/complete/` as sub-paths.
+- **`core/management/adapters.py`** — added the `_check_profile_completion`
+  method. **This was a real, already-existing bug, not something I
+  introduced:** `CustomSocialAccountAdapter.get_login_redirect_url` already
+  called `CustomEmailAdapter._check_profile_completion(self, request, url)`,
+  but that method didn't exist anywhere — every social login would have
+  hit `AttributeError`. Someone had clearly started wiring up exactly this
+  profile-completion feature before and left the hook dangling; I
+  implemented it rather than leaving it broken or building a parallel
+  mechanism.
+- **`toons/models.py`** — added `ToonStory.get_absolute_url()`, matching
+  `Post.get_absolute_url()` (which already existed). Needed so the
+  dashboard template can link back to either content type the same way:
+  `{{ comment.content_object.get_absolute_url }}` regardless of whether
+  it's a blog post or a toon story.
 
-## In `gocd-server` (separate repo)
+## What this gets you
+- `/dashboard/` — "My Activity": your own comments + reactions (via
+  `engagement`'s `related_name`s), with a completion nudge if needed.
+  **Not** gated by the decorator itself (would be a redirect loop) —
+  always viewable once logged in, same as badminton_court's `index` view.
+- `/profile/complete/` — display name (required) + avatar (optional,
+  auto-resized to 400px via the existing `image_utils.py` helper) + short
+  bio (optional). Redirects back to wherever you were trying to go
+  (`session['profile_next']`), or the dashboard by default.
+- `profiles.decorators.require_completed_profile` — ready to apply to
+  `engagement`'s comment/reaction views in Phase 2. Not applied yet.
+- `LOGIN_REDIRECT_URL = '/dashboard/'` (already set in `social_auth.py`
+  from earlier work) now actually resolves to something real instead of
+  404ing — that was true before this Phase 1 landed, for anyone logging in
+  on the live site right now.
 
-- **`Scripts/deploy.js`** — the Cypress build-context copy patch, same as
-  before. This also didn't make it into your last commit. Re-confirmed
-  syntax-valid with `node --check`, and re-confirmed it's a no-op for
-  badminton_court's deploys (missing `scripts/` dir there, same as before).
+## Design choices worth knowing about
+- **`profile_complete` is a computed property** (`bool(display_name.strip())`),
+  not a stored column — one less thing that can drift out of sync with the
+  actual data, at the cost of a tiny bit more computation per check (negligible
+  here).
+- **Both regular and social signups get an incomplete profile**, not just
+  social like badminton_court. `display_name` is deliberately never
+  pre-filled from the auto-generated `username` (allauth generates one from
+  the email since the signup form only collects email/password) — doing so
+  would make every profile trivially "complete" already and defeat the point.
+- Every place that touches `request.user`'s profile uses `get_or_create`,
+  not a direct `.get()` — covers superusers and any user created outside
+  the normal allauth signup flow (the signal only fires on new signups
+  going forward).
 
-## Already correctly committed — not re-delivered
-`manage.py`/`wsgi.py`/`asgi.py` settings module fix, `static.py` ENVIRONMENT
-import, `base.py` INSTALLED_APPS + middleware, `__init__.py` ROOT_URLCONF
-removal, `urls.py` wiring, the full `toons` app restoration, the full
-`engagement` app, `requirements.txt` additions, and `Dockerfile.cypress`
-(correctly using npm, not badminton_court's pnpm) are all already in the
-repo as committed. Verified by re-cloning and checking, not assumed.
+## Verified, not just written
+Ran in an isolated sandbox (fresh sqlite, dummy env vars, real venv):
+`makemigrations`/`migrate` clean, `check` clean (1 unrelated pre-existing
+CKEditor warning), full 34-test repo-wide suite passes (18 prior +
+16 new), and a manual end-to-end pass through Django's test client and
+`RequestFactory` covering: signup → incomplete profile → dashboard nudge →
+empty-name rejection → real completion → redirect-back → decorator
+gating a dummy protected view → the adapter fix → avatar resize. Not
+verified: your actual Windows/Docker environment, or a real deploy.
+
+## Not done (later phases per the task doc)
+Gating `engagement`'s comment/reaction views (Phase 2), comment edit/delete
+(Phase 3), nav links for Dashboard/Profile/Logout (Phase 4), Cypress
+`.feature` files (Phase 5), the remaining Phase 6 tests (engagement-gating
+specifically, once Phase 2 lands).

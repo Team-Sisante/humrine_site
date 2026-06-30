@@ -41,6 +41,7 @@ urlpatterns = [
     path('toons/', include('toons.urls')),
     path('blog/', include('blog.urls')),
     path('engagement/', include('engagement.urls')),
+    path('', include('profiles.urls')),
     path('', include('home.urls')),
     # path('ckeditor/', include('ckeditor_uploader.urls')),
     path('health/', HealthCheckView.as_view(), name='health_check'),
