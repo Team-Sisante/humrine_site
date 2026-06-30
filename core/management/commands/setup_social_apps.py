@@ -1,53 +1,108 @@
-# core/management/commands/setup_social_apps.py
+# humrine_site/settings/social_auth.py
 
-from django.core.management.base import BaseCommand
-from django.conf import settings
-from django.contrib.sites.models import Site
-from allauth.socialaccount.models import SocialApp
+"""
+Social authentication (django-allauth) configuration
+"""
 
+import os
+from .base import require_env
 
-class Command(BaseCommand):
-    help = 'Idempotent: create or update SocialApp entries for Google, Facebook, Twitter'
+# Check if we're running tests
+is_running_tests = (
+    os.getenv('CYPRESS', 'false') == 'true' or
+    (require_env('ENVIRONMENT') == 'docker' and require_env('CYPRESS'))
+)
 
-    def handle(self, *args, **options):
-        site = Site.objects.get_current()
+if is_running_tests:
+    # Test configuration
+    ACCOUNT_EMAIL_VERIFICATION = 'none'  # Temporarily disable email verification
+    print("TESTS DETECTED: Email verification disabled for testing")
+else:
+    # Production/development settings
+    ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 
-        providers = {
-            'google':   ('Google Dev',   settings.GOOGLE_CLIENT_ID,   settings.GOOGLE_CLIENT_SECRET),
-            'facebook': ('Facebook Dev', settings.FACEBOOK_CLIENT_ID, settings.FACEBOOK_CLIENT_SECRET),
-            'twitter':  ('Twitter Dev',  settings.TWITTER_CLIENT_ID,  settings.TWITTER_CLIENT_SECRET),
+# Django Allauth Configuration
+ACCOUNT_LOGIN_METHODS = {'email'}  # Allow login with email only
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']  # Required fields for signup
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_PREVENT_ENUMERATION = False
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 7 
+ACCOUNT_EMAIL_CONFIRMATION_HMAC = False
+ACCOUNT_EMAIL_CONFIRMATION_COOLDOWN_SECONDS = 0
+
+# -------------------------------------------------------------------
+# Prefix all auth-related URLs with FORCE_SCRIPT_NAME so the browser
+# lands on the correct mount point (e.g. /court-staging/accounts/login/
+# instead of /accounts/login/ which would fall through to the wrong
+# vhost on a path-based reverse proxy).
+#
+# When FORCE_SCRIPT_NAME is empty (dev environment, no subpath), the
+# prefix reduces to '' and the URLs are unprefixed — no behavior change.
+# -------------------------------------------------------------------
+from .base import FORCE_SCRIPT_NAME
+SCRIPT_NAME = FORCE_SCRIPT_NAME or ''
+
+ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = f'{SCRIPT_NAME}/accounts/login/'
+ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = f'{SCRIPT_NAME}/'
+
+ACCOUNT_USERNAME_BLACKLIST = ['admin', 'staff', 'root']
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+
+LOGIN_REDIRECT_URL = f'{SCRIPT_NAME}/dashboard/'  # Redirect to dashboard after login
+LOGOUT_REDIRECT_URL = f'{SCRIPT_NAME}/accounts/login/'  # Redirect to login after logout
+LOGIN_URL = f'{SCRIPT_NAME}/accounts/login/'  # Used by @login_required decorator
+
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = True
+SOCIALACCOUNT_EMAIL_REQUIRED = True
+SOCIALACCOUNT_STORE_TOKENS = False
+
+# Custom adapter
+ACCOUNT_ADAPTER = 'core.management.adapters.CustomEmailAdapter'
+SOCIALACCOUNT_ADAPTER = 'core.management.adapters.CustomSocialAccountAdapter'
+
+# Social Media Credentials
+GOOGLE_CLIENT_ID = require_env('GOOGLE_CLIENT_ID', '')
+GOOGLE_CLIENT_SECRET = require_env('GOOGLE_CLIENT_SECRET', '')
+FACEBOOK_CLIENT_ID = require_env('FACEBOOK_CLIENT_ID', '')
+FACEBOOK_CLIENT_SECRET = require_env('FACEBOOK_CLIENT_SECRET', '')
+TWITTER_CLIENT_ID = require_env('TWITTER_CLIENT_ID', '')
+TWITTER_CLIENT_SECRET = require_env('TWITTER_CLIENT_SECRET', '')
+
+# Social Media Provider Configuration
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
         }
-
-        for provider_id, (name, client_id, secret) in providers.items():
-            if not client_id or not secret:
-                self.stdout.write(self.style.WARNING(
-                    f'Skipping {provider_id}: credentials not configured'
-                ))
-                continue
-
-            # Remove duplicates (keep the first one, delete extras)
-            apps = SocialApp.objects.filter(provider=provider_id)
-            if apps.count() > 1:
-                first = apps.first()
-                apps.exclude(pk=first.pk).delete()
-                self.stdout.write(self.style.SUCCESS(f'Removed duplicate {provider_id} entries'))
-
-            # Now update or create the single app
-            app, created = SocialApp.objects.update_or_create(
-                provider=provider_id,
-                defaults={
-                    'name': name,
-                    'client_id': client_id,
-                    'secret': secret,
-                    'provider_id': provider_id,
-                },
-            )
-            if created:
-                app.sites.add(site)
-                self.stdout.write(self.style.SUCCESS(f'Created {provider_id} SocialApp'))
-            else:
-                # Ensure site association always exists
-                app.sites.add(site)
-                self.stdout.write(self.style.SUCCESS(f'Updated {provider_id} SocialApp'))
-
-        self.stdout.write(self.style.SUCCESS('All social apps are ready'))
+    },
+    'facebook': {
+        'METHOD': 'oauth2',
+        'SCOPE': ['email', 'public_profile'],
+        'AUTH_PARAMS': {'auth_type': 'reauthenticate'},
+        'INITIAL_PARAMS': {'cookie': True},
+        'FIELDS': [
+            'id',
+            'email',
+            'name',
+            'first_name',
+            'last_name',
+            'verified',
+            'locale',
+            'timezone',
+            'link',
+            'gender',
+            'updated_time',
+        ],
+        'VERIFIED_EMAIL': False,
+    },
+    'twitter': {
+        'SCOPE': ['tweet.read', 'users.read'],
+        'METHOD': 'oauth2',
+        'OAUTH_PKCE_ENABLED': True,
+    }
+}

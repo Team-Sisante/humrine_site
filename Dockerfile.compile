@@ -13,6 +13,8 @@ COPY blog/                   ./blog/
 COPY templates/              ./templates/
 COPY static/                 ./static/
 COPY engagement/             ./engagement/
+COPY profiles/               ./profiles/
+COPY core/                   ./core/
 COPY manage.py               .
 COPY requirements.txt        .
 
@@ -27,6 +29,13 @@ RUN export DJANGO_SETTINGS_MODULE=humrine_site.settings \
     && export DEBUG=False \
     && export ALLOWED_HOSTS=localhost \
     && export CSRF_TRUSTED_ORIGINS=http://localhost \
+    && export GCP_PROJECT_ID=dummy-for-build \
+    && export SITE_HEADER=dummy \
+    && export SITE_TITLE=dummy \
+    && export SITE_INDEX_TITLE=dummy \
+    && export APP_PROTOCOL=http \
+    && export APP_DOMAIN=localhost \
+    && export APP_PORT=8000 \
     && export POSTE_ADMIN_PASSWORD=dummy \
     && export EMAIL_HOST=mail-production \
     && export EMAIL_PORT=465 \
@@ -43,7 +52,6 @@ RUN export DJANGO_SETTINGS_MODULE=humrine_site.settings \
     && export POSTEIO_DB_PASSWORD=dummy \
     && export ADMIN_PASSWORD=dummy \
     && export SUPPORT_EMAIL=dummy@example.com \
-    # && python -c "import django; django.setup(); import blog.templatetags.blog_tags; print('✅ blog.templatetags imported successfully')"
     && python -c "import django; django.setup(); import blog; import blog.templatetags.blog_tags; print('✅ blog and its templatetags imported successfully')"
 
 # ---- Compile the binary ----
@@ -112,6 +120,8 @@ RUN export PYINSTALLER_BUILD=true \
         --collect-all ckeditor \
         --collect-all ckeditor_uploader \
         --collect-all engagement \
+        --collect-all profiles \
+        --collect-all core \
         --hidden-import blog \
         --hidden-import blog.models \
         --hidden-import blog.templatetags \

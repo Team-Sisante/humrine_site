@@ -6,6 +6,8 @@ volumes:
   postgres_data_production:
   poste_data_staging:
   poste_data_production:
+  staticfiles_staging:
+  staticfiles_production:
 
 networks:
   humrine-network:
@@ -209,7 +211,7 @@ services:
       - MEDIA_ROOT=/app/data/media
     volumes:
       - ./data:/app/data
-      - ./staticfiles:/app/staticfiles
+      - staticfiles_staging:/app/staticfiles
     depends_on:
       db-staging:
         condition: service_healthy
@@ -232,7 +234,7 @@ services:
       - ./nginx-staging.conf:/etc/nginx/nginx.conf:ro
       - ./templates/offline.html:/var/www/html/offline.html:ro
       - ./data:/opt/humrine_site/data:ro
-      - ./staticfiles:/opt/humrine_site/staticfiles:ro
+      - staticfiles_staging:/opt/humrine_site/staticfiles:ro
     depends_on:
       - web-staging
     networks:
@@ -365,7 +367,7 @@ services:
       - MEDIA_ROOT=/app/data/media
     volumes:
       - ./data:/app/data
-      - ./staticfiles:/app/staticfiles
+      - staticfiles_production:/app/staticfiles
     depends_on:
       db-production:
         condition: service_healthy
@@ -388,7 +390,7 @@ services:
       - ./nginx-production.conf:/etc/nginx/nginx.conf:ro
       - ./templates/offline.html:/var/www/html/offline.html:ro
       - ./data:/opt/humrine_site/data:ro
-      - ./staticfiles:/opt/humrine_site/staticfiles:ro
+      - staticfiles_production:/opt/humrine_site/staticfiles:ro
     depends_on:
       - web-production
     networks:
