@@ -1,0 +1,384 @@
+humrine_site/
+├── .e.env.common.enc
+├── .e.env.dev.enc
+├── .e.env.dev.template.enc
+├── .e.env.docker.enc
+├── .e.env.docker.template.enc
+├── .e.env.production.enc
+├── .e.env.production.template.enc
+├── .e.env.staging.enc
+├── .e.env.staging.template.enc
+├── .e.env.test.dev.enc
+├── .e.env.test.docker.enc
+├── .e.env.test.production.enc
+├── .e.env.test.staging.enc
+├── .env.common
+├── .env.common.safe
+├── .env.common.template
+├── .env.dev
+├── .env.dev.safe
+├── .env.dev.template
+├── .env.docker
+├── .env.docker.safe
+├── .env.docker.template
+├── .env.production
+├── .env.production.safe
+├── .env.production.template
+├── .env.staging
+├── .env.staging.safe
+├── .env.staging.template
+├── .env.test.dev
+├── .env.test.docker
+├── .env.test.production
+├── .env.test.staging
+├── affiliate/
+│   ├── admin.py
+│   ├── apps.py
+│   ├── data/
+│   │   └── links.csv
+│   ├── involve_api.py
+│   ├── management/
+│   │   ├── commands/
+│   │   │   ├── backup_db.py
+│   │   │   ├── delete_affiliate_links.py
+│   │   │   ├── import_affiliate_links.py
+│   │   │   ├── restore_db.py
+│   │   │   └── __init__.py
+│   │   └── __init__.py
+│   ├── migrations/
+│   │   ├── 0001_initial.py
+│   │   ├── 0002_trackedaffiliatelink_description_and_more.py
+│   │   ├── 0003_trackedaffiliatelink_price.py
+│   │   ├── 0004_alter_affiliateclick_link.py
+│   │   └── __init__.py
+│   ├── models.py
+│   ├── templates/
+│   │   └── affiliate/
+│   │       ├── deal_list.html
+│   │       ├── dynamic_deals.html
+│   │       ├── includes/
+│   │       └── stats.html
+│   ├── templatetags/
+│   │   ├── affiliate_tags.py
+│   │   └── __init__.py
+│   ├── tests.py
+│   ├── urls.py
+│   ├── views.py
+│   └── __init__.py
+├── blog/
+│   ├── admin.py
+│   ├── apps.py
+│   ├── migrations/
+│   │   ├── 0001_initial.py
+│   │   ├── 0002_postimage.py
+│   │   ├── 0003_alter_post_body.py
+│   │   ├── 0004_alter_post_body.py
+│   │   └── __init__.py
+│   ├── models.py
+│   ├── templatetags/
+│   │   ├── blog_tags.py
+│   │   └── __init__.py
+│   ├── tests.py
+│   ├── urls.py
+│   ├── views.py
+│   └── __init__.py
+├── build-info/
+│   └── image-tag.txt
+├── certs/
+│   ├── ca.pem
+│   ├── posteio-cert.pem
+│   └── posteio-key.pem
+├── core/
+│   ├── admin.py
+│   ├── apps.py
+│   ├── management/
+│   │   ├── commands/
+│   │   │   ├── setup_social_apps.py
+│   │   │   ├── __init__.py
+│   │   │   └── __pycache__/
+│   │   └── __init__.py
+│   ├── migrations/
+│   │   └── __init__.py
+│   ├── models.py
+│   ├── tests.py
+│   ├── views.py
+│   └── __init__.py
+├── data/
+│   ├── backup.lst
+│   ├── backups/
+│   │   └── db_backup_20260621_211458.json
+│   └── db.sqlite3
+├── db.sqlite3
+├── deploy/
+│   └── setup-binary.sh
+├── docker-compose-local-ghcr.yml
+├── docker-compose.vm.yml
+├── docker-compose.yml
+├── Dockerfile
+├── Dockerfile.base
+├── Dockerfile.binary
+├── Dockerfile.compile
+├── Dockerfile.cypress
+├── Dockerfile.posteio
+├── engagement/
+│   ├── admin.py
+│   ├── apps.py
+│   ├── forms.py
+│   ├── migrations/
+│   │   ├── 0001_initial.py
+│   │   └── __init__.py
+│   ├── mixins.py
+│   ├── models.py
+│   ├── static/
+│   │   └── engagement/
+│   │       ├── css/
+│   │       └── js/
+│   ├── templates/
+│   │   └── engagement/
+│   │       └── _comments_reactions.html
+│   ├── templatetags/
+│   │   ├── engagement_extras.py
+│   │   └── __init__.py
+│   ├── tests.py
+│   ├── urls.py
+│   ├── views.py
+│   └── __init__.py
+├── env.passphrase.txt
+├── folderstructure.txt
+├── home/
+│   ├── admin.py
+│   ├── apps.py
+│   ├── migrations/
+│   │   └── __init__.py
+│   ├── models.py
+│   ├── tests.py
+│   ├── urls.py
+│   ├── views.py
+│   └── __init__.py
+├── humrine_site/
+│   ├── asgi.py
+│   ├── image_utils.py
+│   ├── settings/
+│   │   ├── auth.py
+│   │   ├── base.py
+│   │   ├── base.py.bak
+│   │   ├── ckeditor.py
+│   │   ├── database.py
+│   │   ├── email.py
+│   │   ├── prod.py
+│   │   ├── security.py
+│   │   ├── social_auth.py
+│   │   ├── static.py
+│   │   └── __init__.py
+│   ├── sitemaps.py
+│   ├── uploads/
+│   ├── urls.py
+│   ├── urls_migration.py
+│   ├── wsgi.py
+│   └── __init__.py
+├── manage.py
+├── media/
+│   ├── blog/
+│   │   ├── 1.jpg
+│   │   ├── 10.jpg
+│   │   ├── 2.jpg
+│   │   ├── 3.jpg
+│   │   ├── 4.jpg
+│   │   ├── 5.jpg
+│   │   ├── 6.jpg
+│   │   ├── 7.jpg
+│   │   ├── 8.jpg
+│   │   └── 9.jpg
+│   └── toons/
+│       ├── Syrene-1.jpg
+│       └── Syrene-2.jpg
+├── nginx-production.conf
+├── nginx-production.conf.template
+├── nginx-staging.conf
+├── nginx-staging.conf.template
+├── package-lock.json
+├── package.json
+├── pages/
+│   ├── views.py
+│   └── __init__.py
+├── README.md
+├── requirements.txt
+├── server.log
+├── sourcearea.zip
+├── static/
+│   ├── .gitkeep
+│   ├── admin/
+│   │   └── css/
+│   │       └── ckeditor_fix.css
+│   ├── android-chrome-192x192.png
+│   ├── android-chrome-512x512.png
+│   ├── apple-touch-icon.png
+│   ├── blog/
+│   │   └── css/
+│   │       └── blog_detail.css
+│   ├── css/
+│   │   ├── base.css
+│   │   └── toons.css
+│   ├── favicon-16x16.png
+│   ├── favicon-32x32.png
+│   ├── favicon.ico
+│   └── site.webmanifest
+├── staticfiles_local/
+│   ├── admin/
+│   │   ├── css/
+│   │   │   ├── autocomplete.css
+│   │   │   ├── base.css
+│   │   │   ├── changelists.css
+│   │   │   ├── ckeditor_fix.css
+│   │   │   ├── dark_mode.css
+│   │   │   ├── dashboard.css
+│   │   │   ├── forms.css
+│   │   │   ├── login.css
+│   │   │   ├── nav_sidebar.css
+│   │   │   ├── responsive.css
+│   │   │   ├── responsive_rtl.css
+│   │   │   ├── rtl.css
+│   │   │   ├── unusable_password_field.css
+│   │   │   ├── vendor/
+│   │   │   └── widgets.css
+│   │   ├── img/
+│   │   │   ├── calendar-icons.svg
+│   │   │   ├── icon-addlink.svg
+│   │   │   ├── icon-alert-dark.svg
+│   │   │   ├── icon-alert.svg
+│   │   │   ├── icon-calendar.svg
+│   │   │   ├── icon-changelink.svg
+│   │   │   ├── icon-clock.svg
+│   │   │   ├── icon-debug-dark.svg
+│   │   │   ├── icon-debug.svg
+│   │   │   ├── icon-deletelink.svg
+│   │   │   ├── icon-hidelink.svg
+│   │   │   ├── icon-info-dark.svg
+│   │   │   ├── icon-info.svg
+│   │   │   ├── icon-no-dark.svg
+│   │   │   ├── icon-no.svg
+│   │   │   ├── icon-unknown-alt.svg
+│   │   │   ├── icon-unknown.svg
+│   │   │   ├── icon-viewlink.svg
+│   │   │   ├── icon-yes-dark.svg
+│   │   │   ├── icon-yes.svg
+│   │   │   ├── inline-delete.svg
+│   │   │   ├── README.md
+│   │   │   ├── search.svg
+│   │   │   ├── selector-icons.svg
+│   │   │   ├── sorting-icons.svg
+│   │   │   ├── tooltag-add.svg
+│   │   │   └── tooltag-arrowright.svg
+│   │   └── js/
+│   │       ├── actions.js
+│   │       ├── admin/
+│   │       ├── autocomplete.js
+│   │       ├── calendar.js
+│   │       ├── cancel.js
+│   │       ├── change_form.js
+│   │       ├── core.js
+│   │       ├── filters.js
+│   │       ├── inlines.js
+│   │       ├── jquery.init.js
+│   │       ├── nav_sidebar.js
+│   │       ├── popup_response.js
+│   │       ├── prepopulate.js
+│   │       ├── prepopulate_init.js
+│   │       ├── SelectBox.js
+│   │       ├── SelectFilter2.js
+│   │       ├── theme.js
+│   │       ├── urlify.js
+│   │       └── vendor/
+│   ├── android-chrome-192x192.png
+│   ├── android-chrome-512x512.png
+│   ├── apple-touch-icon.png
+│   ├── ckeditor/
+│   │   ├── ckeditor/
+│   │   │   ├── adapters/
+│   │   │   ├── bender-runner.config.json
+│   │   │   ├── build-config.js
+│   │   │   ├── CHANGES.md
+│   │   │   ├── ckeditor.js
+│   │   │   ├── config.js
+│   │   │   ├── contents.css
+│   │   │   ├── lang/
+│   │   │   ├── LICENSE.md
+│   │   │   ├── plugins/
+│   │   │   ├── README.md
+│   │   │   ├── SECURITY.md
+│   │   │   ├── skins/
+│   │   │   ├── styles.js
+│   │   │   └── vendor/
+│   │   ├── ckeditor-init.js
+│   │   ├── ckeditor.css
+│   │   ├── ckeditor_uploader/
+│   │   │   └── admin_base.css
+│   │   ├── file-icons/
+│   │   │   ├── doc.png
+│   │   │   ├── file.png
+│   │   │   ├── pdf.png
+│   │   │   ├── ppt.png
+│   │   │   ├── swf.png
+│   │   │   ├── txt.png
+│   │   │   └── xls.png
+│   │   ├── fixups.js
+│   │   └── galleriffic/
+│   │       ├── css/
+│   │       └── js/
+│   ├── favicon-16x16.png
+│   ├── favicon-32x32.png
+│   ├── favicon.ico
+│   └── site.webmanifest
+├── templates/
+│   ├── about.html
+│   ├── account/
+│   │   ├── login.html
+│   │   ├── logout.html
+│   │   └── signup.html
+│   ├── admin/
+│   │   ├── affiliate/
+│   │   │   ├── change_list_with_import.html
+│   │   │   ├── import_csv.html
+│   │   │   └── restore.html
+│   │   └── base_site.html
+│   ├── ads.txt
+│   ├── base.html
+│   ├── blog/
+│   │   ├── latest_posts.html
+│   │   ├── post_detail.html
+│   │   └── post_list.html
+│   ├── contact.html
+│   ├── deals.html
+│   ├── feedback.html
+│   ├── home/
+│   │   └── home.html
+│   ├── offline.html
+│   ├── privacy_policy.html
+│   ├── robots.txt
+│   ├── terms_of_service.html
+│   └── toons/
+│       ├── story_detail.html
+│       └── story_list.html
+├── toons/
+│   ├── admin.py
+│   ├── apps.py
+│   ├── migrations/
+│   │   ├── 0001_initial.py
+│   │   └── __init__.py
+│   ├── models.py
+│   ├── tests.py
+│   ├── urls.py
+│   ├── views.py
+│   └── __init__.py
+├── toons_temp/
+│   ├── admin.py
+│   ├── apps.py
+│   ├── migrations/
+│   │   ├── 0001_initial.py
+│   │   ├── 0002_alter_toonstory_description.py
+│   │   └── __init__.py
+│   ├── models.py
+│   ├── tests.py
+│   ├── urls_backup.py
+│   ├── views.py
+│   └── __init__.py
