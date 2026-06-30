@@ -217,6 +217,7 @@ INSTALLED_APPS = [
     'ckeditor',
     'ckeditor_uploader',
     'engagement',
+    'profiles',
     'core',
 ]
 

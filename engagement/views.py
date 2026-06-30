@@ -6,6 +6,8 @@ from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 
+from profiles.decorators import require_completed_profile
+
 from .forms import CommentForm
 from .models import Reaction
 
@@ -24,6 +26,7 @@ def _get_target(app_label, model_name, object_id):
 
 
 @login_required
+@require_completed_profile
 @require_POST
 def add_comment(request, app_label, model_name, object_id):
     content_type, obj = _get_target(app_label, model_name, object_id)
@@ -53,6 +56,7 @@ def add_comment(request, app_label, model_name, object_id):
 
 
 @login_required
+@require_completed_profile
 @require_POST
 def toggle_reaction(request, app_label, model_name, object_id):
     content_type, obj = _get_target(app_label, model_name, object_id)
