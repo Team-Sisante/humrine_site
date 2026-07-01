@@ -17,11 +17,12 @@ module.exports = async function (helpers) {
       name: 'target',
       message: 'Select the environment to set up/update social media apps:',
       choices: [
-        { name: 'Localhost', value: 'localhost' },
-        { name: 'Badminton Court - Staging', value: 'badminton-staging' },
-        { name: 'Badminton Court - Production', value: 'badminton-production' },
+        { name: 'Local Dev', value: 'local-dev' },
+        { name: 'Local Docker', value: 'docker' },
         { name: 'Humrine Site - Staging', value: 'humrine-staging' },
         { name: 'Humrine Site - Production', value: 'humrine-production' },
+        { name: 'Badminton Court - Staging', value: 'badminton-staging' },
+        { name: 'Badminton Court - Production', value: 'badminton-production' },
       ],
     },
   ]);
@@ -32,13 +33,12 @@ module.exports = async function (helpers) {
   const projectRoot = _path.resolve(__dirname, '..', '..');
   const commonEnv = _path.join(projectRoot, '.env.common');
   const envMapping = {
-    'localhost': '.env.dev',           // <-- added this
     'local-dev': '.env.dev',
     'local-docker': '.env.docker',
-    'badminton-staging': '.env.staging',
-    'badminton-production': '.env.production',
     'humrine-staging': '.env.staging',
     'humrine-production': '.env.production',
+    'badminton-staging': '.env.staging',
+    'badminton-production': '.env.production',
   };
   const targetEnvFile = envMapping[target];
   const targetEnvPath = _path.join(projectRoot, targetEnvFile);
@@ -62,7 +62,7 @@ module.exports = async function (helpers) {
   // ------------------------------------------------------------
   // 3. Execute the appropriate command
   // ------------------------------------------------------------
-  if (target === 'localhost') {
+  if (target === 'local-dev') {
     // Local: run management command in the current venv
     runCommand('python manage.py setup_social_apps');
   } else {
@@ -74,9 +74,20 @@ module.exports = async function (helpers) {
       'humrine-production': 'humrine-web-production',
     };
     const container = containers[target];
-    const remoteCmd = `sudo docker exec ${container} /app/badminton_court_linux setup_social_apps`;
+
+    // Map each remote target to its correct binary inside the container
+    const binaryMap = {
+      'badminton-staging': '/app/badminton_court_linux',
+      'badminton-production': '/app/badminton_court_linux',
+      'humrine-staging': '/app/humrine_site_linux',
+      'humrine-production': '/app/humrine_site_linux',
+    };
+    const binary = binaryMap[target];
+
+    const remoteCmd = `sudo docker exec ${container} ${binary} setup_social_apps`;
     const SSH_OPTS = '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o KexAlgorithms=+diffie-hellman-group14-sha256 -o LogLevel=ERROR';
-    const sshKey = _path.resolve(__dirname, '..', '..', 'gocd-server', 'secrets', 'agent-key');
+    // Corrected path: gocd-server is a sibling directory of the project root
+    const sshKey = _path.resolve(projectRoot, '..', 'gocd-server', 'secrets', 'agent-key');
     const sshUser = process.env.VM_SSH_USER || 'your-default-user';
     const gcpIp = process.env.GCP_VM_IP || 'your-default-ip';
     const sshCmd = `ssh -i "${sshKey}" ${SSH_OPTS} ${sshUser}@${gcpIp} "${remoteCmd}"`;

@@ -3,7 +3,7 @@
 from django.db import models
 from django.utils.text import slugify
 from django.urls import reverse
-# from ckeditor.fields import RichTextField
+from ckeditor.fields import RichTextField
 
 from humrine_site.image_utils import resize_image_field
 
@@ -12,7 +12,7 @@ class Post(models.Model):
 
     title = models.CharField(max_length=200)
     slug = models.SlugField(unique=True, max_length=200, blank=True)
-    body = models.TextField()
+    body = RichTextField(blank=True, config_name='blog')
     image = models.ImageField(upload_to='blog/', blank=True, null=True)
     published = models.DateTimeField(auto_now_add=True)
 
