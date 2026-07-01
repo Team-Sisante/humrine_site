@@ -1,108 +1,56 @@
-# humrine_site/settings/social_auth.py
-
-"""
-Social authentication (django-allauth) configuration
-"""
+# core/management/commands/setup_social_apps.py
 
 import os
-from .base import require_env
+from django.core.management.base import BaseCommand
+from django.contrib.sites.models import Site
+from allauth.socialaccount.models import SocialApp
+from humrine_site.settings.base import require_env  # correct import
 
-# Check if we're running tests
-is_running_tests = (
-    os.getenv('CYPRESS', 'false') == 'true' or
-    (require_env('ENVIRONMENT') == 'docker' and require_env('CYPRESS'))
-)
 
-if is_running_tests:
-    # Test configuration
-    ACCOUNT_EMAIL_VERIFICATION = 'none'  # Temporarily disable email verification
-    print("TESTS DETECTED: Email verification disabled for testing")
-else:
-    # Production/development settings
-    ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+class Command(BaseCommand):
+    help = 'Idempotent: create or update SocialApp entries for Google, Facebook, Twitter'
 
-# Django Allauth Configuration
-ACCOUNT_LOGIN_METHODS = {'email'}  # Allow login with email only
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']  # Required fields for signup
-ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_PREVENT_ENUMERATION = False
-ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 7 
-ACCOUNT_EMAIL_CONFIRMATION_HMAC = False
-ACCOUNT_EMAIL_CONFIRMATION_COOLDOWN_SECONDS = 0
+    def handle(self, *args, **options):
+        site = Site.objects.get_current()
 
-# -------------------------------------------------------------------
-# Prefix all auth-related URLs with FORCE_SCRIPT_NAME so the browser
-# lands on the correct mount point (e.g. /court-staging/accounts/login/
-# instead of /accounts/login/ which would fall through to the wrong
-# vhost on a path-based reverse proxy).
-#
-# When FORCE_SCRIPT_NAME is empty (dev environment, no subpath), the
-# prefix reduces to '' and the URLs are unprefixed — no behavior change.
-# -------------------------------------------------------------------
-from .base import FORCE_SCRIPT_NAME
-SCRIPT_NAME = FORCE_SCRIPT_NAME or ''
-
-ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = f'{SCRIPT_NAME}/accounts/login/'
-ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = f'{SCRIPT_NAME}/'
-
-ACCOUNT_USERNAME_BLACKLIST = ['admin', 'staff', 'root']
-ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
-
-LOGIN_REDIRECT_URL = f'{SCRIPT_NAME}/dashboard/'  # Redirect to dashboard after login
-LOGOUT_REDIRECT_URL = f'{SCRIPT_NAME}/accounts/login/'  # Redirect to login after logout
-LOGIN_URL = f'{SCRIPT_NAME}/accounts/login/'  # Used by @login_required decorator
-
-SOCIALACCOUNT_LOGIN_ON_GET = True
-SOCIALACCOUNT_EMAIL_VERIFICATION = True
-SOCIALACCOUNT_EMAIL_REQUIRED = True
-SOCIALACCOUNT_STORE_TOKENS = False
-
-# Custom adapter
-ACCOUNT_ADAPTER = 'core.management.adapters.CustomEmailAdapter'
-SOCIALACCOUNT_ADAPTER = 'core.management.adapters.CustomSocialAccountAdapter'
-
-# Social Media Credentials
-GOOGLE_CLIENT_ID = require_env('GOOGLE_CLIENT_ID', '')
-GOOGLE_CLIENT_SECRET = require_env('GOOGLE_CLIENT_SECRET', '')
-FACEBOOK_CLIENT_ID = require_env('FACEBOOK_CLIENT_ID', '')
-FACEBOOK_CLIENT_SECRET = require_env('FACEBOOK_CLIENT_SECRET', '')
-TWITTER_CLIENT_ID = require_env('TWITTER_CLIENT_ID', '')
-TWITTER_CLIENT_SECRET = require_env('TWITTER_CLIENT_SECRET', '')
-
-# Social Media Provider Configuration
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': [
-            'profile',
-            'email',
-        ],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
+        # Use require_env with default='' so missing vars raise an error,
+        # but we catch and handle them gracefully to inform the user.
+        providers = {
+            'google':   ('Google Dev',   'GOOGLE_CLIENT_ID',   'GOOGLE_CLIENT_SECRET'),
+            'facebook': ('Facebook Dev', 'FACEBOOK_CLIENT_ID', 'FACEBOOK_CLIENT_SECRET'),
+            'twitter_oauth2': ('Twitter Dev', 'TWITTER_CLIENT_ID', 'TWITTER_CLIENT_SECRET'),
         }
-    },
-    'facebook': {
-        'METHOD': 'oauth2',
-        'SCOPE': ['email', 'public_profile'],
-        'AUTH_PARAMS': {'auth_type': 'reauthenticate'},
-        'INITIAL_PARAMS': {'cookie': True},
-        'FIELDS': [
-            'id',
-            'email',
-            'name',
-            'first_name',
-            'last_name',
-            'verified',
-            'locale',
-            'timezone',
-            'link',
-            'gender',
-            'updated_time',
-        ],
-        'VERIFIED_EMAIL': False,
-    },
-    'twitter': {
-        'SCOPE': ['tweet.read', 'users.read'],
-        'METHOD': 'oauth2',
-        'OAUTH_PKCE_ENABLED': True,
-    }
-}
+
+        for provider_id, (name, id_var, secret_var) in providers.items():
+            try:
+                client_id = require_env(id_var)      # will raise if missing
+                secret = require_env(secret_var)
+            except Exception as e:
+                self.stdout.write(self.style.WARNING(
+                    f'Skipping {provider_id}: {e}'
+                ))
+                continue
+
+            # Remove duplicates
+            apps = SocialApp.objects.filter(provider=provider_id)
+            if apps.count() > 1:
+                first = apps.first()
+                apps.exclude(pk=first.pk).delete()
+                self.stdout.write(self.style.SUCCESS(f'Removed duplicate {provider_id} entries'))
+
+            app, created = SocialApp.objects.update_or_create(
+                provider=provider_id,
+                defaults={
+                    'name': name,
+                    'client_id': client_id,
+                    'secret': secret,
+                },
+            )
+            if created:
+                app.sites.add(site)
+                self.stdout.write(self.style.SUCCESS(f'Created {provider_id} SocialApp'))
+            else:
+                app.sites.add(site)
+                self.stdout.write(self.style.SUCCESS(f'Updated {provider_id} SocialApp'))
+
+        self.stdout.write(self.style.SUCCESS('All social apps are ready'))

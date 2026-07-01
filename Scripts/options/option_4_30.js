@@ -32,7 +32,8 @@ module.exports = async function (helpers) {
   const projectRoot = _path.resolve(__dirname, '..', '..'); // assuming script is in Scripts/options/
   const commonEnv = _path.join(projectRoot, '.env.common');
   const envMapping = {
-    'local': '.env.dev',
+    'local-dev': '.env.dev',
+    'local-docker': '.env.docker',
     'badminton-staging': '.env.staging',
     'badminton-production': '.env.production',
     'humrine-staging': '.env.staging',
