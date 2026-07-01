@@ -17,7 +17,7 @@ module.exports = async function (helpers) {
       name: 'target',
       message: 'Select the environment to set up/update social media apps:',
       choices: [
-        { name: 'Localhost', value: 'local' },
+        { name: 'Localhost', value: 'localhost' },
         { name: 'Badminton Court - Staging', value: 'badminton-staging' },
         { name: 'Badminton Court - Production', value: 'badminton-production' },
         { name: 'Humrine Site - Staging', value: 'humrine-staging' },
@@ -29,10 +29,12 @@ module.exports = async function (helpers) {
   // ------------------------------------------------------------
   // 2. Load environment files (.env.common + target-specific)
   // ------------------------------------------------------------
-  const projectRoot = _path.resolve(__dirname, '..', '..'); // assuming script is in Scripts/options/
+  const projectRoot = _path.resolve(__dirname, '..', '..');
   const commonEnv = _path.join(projectRoot, '.env.common');
   const envMapping = {
-    'local': '.env.dev',
+    'localhost': '.env.dev',           // <-- added this
+    'local-dev': '.env.dev',
+    'local-docker': '.env.docker',
     'badminton-staging': '.env.staging',
     'badminton-production': '.env.production',
     'humrine-staging': '.env.staging',
@@ -60,7 +62,7 @@ module.exports = async function (helpers) {
   // ------------------------------------------------------------
   // 3. Execute the appropriate command
   // ------------------------------------------------------------
-  if (target === 'local') {
+  if (target === 'localhost') {
     // Local: run management command in the current venv
     runCommand('python manage.py setup_social_apps');
   } else {
@@ -75,7 +77,6 @@ module.exports = async function (helpers) {
     const remoteCmd = `sudo docker exec ${container} /app/badminton_court_linux setup_social_apps`;
     const SSH_OPTS = '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o KexAlgorithms=+diffie-hellman-group14-sha256 -o LogLevel=ERROR';
     const sshKey = _path.resolve(__dirname, '..', '..', 'gocd-server', 'secrets', 'agent-key');
-    // Use the environment variables that were just loaded (or fallback to process.env)
     const sshUser = process.env.VM_SSH_USER || 'your-default-user';
     const gcpIp = process.env.GCP_VM_IP || 'your-default-ip';
     const sshCmd = `ssh -i "${sshKey}" ${SSH_OPTS} ${sshUser}@${gcpIp} "${remoteCmd}"`;

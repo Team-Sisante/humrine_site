@@ -101,6 +101,13 @@ SOCIALACCOUNT_PROVIDERS = {
         'VERIFIED_EMAIL': False,
     },
     'twitter': {
+        'APP': {
+            'client_id': TWITTER_CLIENT_ID,
+            'secret': TWITTER_CLIENT_SECRET,
+            'key': '',
+        },
         'SCOPE': ['tweet.read', 'users.read'],
+        'METHOD': 'oauth2',
+        'OAUTH_PKCE_ENABLED': True,
     }
 }

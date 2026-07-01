@@ -170,6 +170,9 @@
 
   { "id": "11.1", "name": "Fix staging DB permissions", "script": "option_11_1.js", "section": 11 },
   { "id": "11.2", "name": "Run staging migrations", "script": "option_11_2.js", "section": 11 },
+  { "id": "11.3", "name": "Load local dev data", "script": "option_11_3.js", "section": 11 },
+  { "id": "11.4", "name": "Backup database (dumpdata)", "script": "option_11_4.js", "section": 11 },
+  { "id": "11.5", "name": "Restore database from backup", "script": "option_11_5.js", "section": 11 },
 
   { "id": "12.1", "name": "Web", "script": "option_12_1.js", "section": 12 },
   { "id": "12.2", "name": "Database", "script": "option_12_2.js", "section": 12 },
@@ -188,6 +191,9 @@
 
   { "id": "14.1", "name": "Fix production DB permissions", "script": "option_14_1.js", "section": 14 },
   { "id": "14.2", "name": "Run production migrations", "script": "option_14_2.js", "section": 14 },
+  { "id": "14.3", "name": "Load local dev data", "script": "option_14_3.js", "section": 14 },
+  { "id": "14.4", "name": "Backup database (dumpdata)", "script": "option_14_4.js", "section": 14 },
+  { "id": "14.5", "name": "Restore database from backup", "script": "option_14_5.js", "section": 14 },
 
   { "id": "15.1", "name": "Full Docker system reset (⚠ DESTROYS everything)", "script": "option_15_1.js", "section": 15 },
 

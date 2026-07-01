@@ -1,9 +1,10 @@
 # core/management/commands/setup_social_apps.py
 
+import os
 from django.core.management.base import BaseCommand
-from django.conf import settings
 from django.contrib.sites.models import Site
 from allauth.socialaccount.models import SocialApp
+from humrine_site.settings.base import require_env  # correct import
 
 
 class Command(BaseCommand):
@@ -12,41 +13,43 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         site = Site.objects.get_current()
 
+        # Use require_env with default='' so missing vars raise an error,
+        # but we catch and handle them gracefully to inform the user.
         providers = {
-            'google':   ('Google Dev',   settings.GOOGLE_CLIENT_ID,   settings.GOOGLE_CLIENT_SECRET),
-            'facebook': ('Facebook Dev', settings.FACEBOOK_CLIENT_ID, settings.FACEBOOK_CLIENT_SECRET),
-            'twitter':  ('Twitter Dev',  settings.TWITTER_CLIENT_ID,  settings.TWITTER_CLIENT_SECRET),
+            'google':   ('Google Dev',   'GOOGLE_CLIENT_ID',   'GOOGLE_CLIENT_SECRET'),
+            'facebook': ('Facebook Dev', 'FACEBOOK_CLIENT_ID', 'FACEBOOK_CLIENT_SECRET'),
+            'twitter_oauth2': ('Twitter Dev', 'TWITTER_CLIENT_ID', 'TWITTER_CLIENT_SECRET'),
         }
 
-        for provider_id, (name, client_id, secret) in providers.items():
-            if not client_id or not secret:
+        for provider_id, (name, id_var, secret_var) in providers.items():
+            try:
+                client_id = require_env(id_var)      # will raise if missing
+                secret = require_env(secret_var)
+            except Exception as e:
                 self.stdout.write(self.style.WARNING(
-                    f'Skipping {provider_id}: credentials not configured'
+                    f'Skipping {provider_id}: {e}'
                 ))
                 continue
 
-            # Remove duplicates (keep the first one, delete extras)
+            # Remove duplicates
             apps = SocialApp.objects.filter(provider=provider_id)
             if apps.count() > 1:
                 first = apps.first()
                 apps.exclude(pk=first.pk).delete()
                 self.stdout.write(self.style.SUCCESS(f'Removed duplicate {provider_id} entries'))
 
-            # Now update or create the single app
             app, created = SocialApp.objects.update_or_create(
                 provider=provider_id,
                 defaults={
                     'name': name,
                     'client_id': client_id,
                     'secret': secret,
-                    'provider_id': provider_id,
                 },
             )
             if created:
                 app.sites.add(site)
                 self.stdout.write(self.style.SUCCESS(f'Created {provider_id} SocialApp'))
             else:
-                # Ensure site association always exists
                 app.sites.add(site)
                 self.stdout.write(self.style.SUCCESS(f'Updated {provider_id} SocialApp'))
 

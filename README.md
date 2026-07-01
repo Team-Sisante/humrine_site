@@ -1,98 +1,70 @@
-# Phase 1 + Phase 2 — combined delivery
+# Hotfix: 4 issues
 
-**Important context first:** when I started Phase 2, I checked the real
-`Team-Sisante/humrine_site` repo and the `profiles/` app from Phase 1 wasn't
-there — it hadn't been committed yet. So this zip contains **both phases
-together**: apply this whole thing in one pass, you don't need last
-session's Phase 1 zip as well.
+## Issue 1 — Twitter button missing from login.html + Third-Party Login Failure
 
-I also found `engagement/static/` (the JS/CSS for AJAX comments and
-reactions) was missing from the real repo entirely — only the Python side
-had landed. `_comments_reactions.html` references those files via `{%
-static %}` tags that were 404ing. Recreated both, with the Phase 2 fix
-built in from the start. Right now, without this, the comment/reaction
-buttons on the live site don't do anything via JS — only a plain-HTML form
-fallback would work, and even that's untested without the rest of this.
+**Root cause (two problems):**
+1. `login.html`'s `{% else %}` fallback block (used when no `SocialApp`
+   credentials are registered in the Django admin yet) only had Google and
+   Facebook hardcoded — Twitter was omitted. `signup.html` had all three.
+   A missing button was the visible symptom; adding it back is the fix.
 
-## New: `profiles/` app (entire folder) — Phase 1
-Model, decorator, signal, views, forms, admin, templates, migration, 16
-tests.
+2. `social_auth.py`'s Twitter provider config had `SCOPE: ['tweet.read',
+   'users.read']` — those are Twitter API v2 / OAuth2 scopes — but no
+   `'METHOD': 'oauth2'` or `'OAUTH_PKCE_ENABLED': True`. The provider
+   defaults to OAuth1, allauth sends an OAuth1 flow, Twitter's OAuth2-
+   registered app rejects it → "Third-Party Login Failure". Fixed by
+   adding the correct method settings that match the v2 scopes.
+   **Note:** this assumes the app in the Twitter Developer Console is
+   actually registered as an OAuth2 app with `tweet.read`/`users.read`
+   permissions. If it's an OAuth1 app, the scopes need to change instead:
+   remove `SCOPE`, keep `METHOD: 'oauth1'` (or just remove the config
+   block entirely and let allauth use its defaults).
 
-## New: `engagement/static/` (js + css) — recreated, was missing
-Same content as originally built, with Phase 2's `profile_incomplete`
-handling included from the start (see below).
+**Files changed:** `templates/account/login.html`, `humrine_site/settings/social_auth.py`
 
-## Modified — Phase 1
-- `humrine_site/settings/base.py` — `'profiles'` added to `INSTALLED_APPS`
-- `humrine_site/urls.py` — `path('', include('profiles.urls'))` added
-- `core/management/adapters.py` — added `_check_profile_completion`, a
-  method that was already being **called** by
-  `CustomSocialAccountAdapter.get_login_redirect_url` but didn't exist
-  anywhere — every social login would have hit `AttributeError`. Pre-
-  existing bug, not something I introduced.
-- `toons/models.py` — added `ToonStory.get_absolute_url()` so the
-  dashboard can link to either content type uniformly.
+## Issue 2 — Two static folders
 
-## Modified — Phase 2 (this session)
-- `engagement/views.py` — `@require_completed_profile` applied to
-  `add_comment` and `toggle_reaction`, between `@login_required` and
-  `@require_POST`.
-- `profiles/decorators.py` — **rewritten**, not just "applied as-is."
-  Found two real problems while wiring it into engagement's POST-only
-  AJAX endpoints that wouldn't show up gating a normal page view (which is
-  all badminton_court's original version ever had to handle):
-  1. **Redirect-back target.** The gated views are API endpoints, not
-     pages — stashing `request.get_full_path()` for a POST to e.g.
-     `/engagement/react/blog/post/3/` would mean the post-completion
-     redirect tries to **GET** that same URL, which 405s (`@require_POST`-
-     only). Fixed: GET requests stash the current path (still correct for
-     a real page-view use case); non-GET requests stash `HTTP_REFERER`
-     instead (the actual page the action fired from), falling back to the
-     path only if Referer is missing.
-  2. **AJAX requests got a blind 302.** `fetch()` follows redirects
-     silently — the caller would receive the complete-profile page's HTML
-     where it expected JSON, `res.json()` throws, and the promise
-     rejection goes uncaught. No feedback to the user at all. Fixed: AJAX
-     requests now get `JsonResponse({'ok': False, 'profile_incomplete':
-     True, 'redirect': ...}, status=403)` instead.
-- `engagement/static/engagement/js/engagement.js` — both fetch handlers
-  (reactions and comments) now check for `data.profile_incomplete` first
-  and navigate the browser to `data.redirect` if so, before falling
-  through to the existing success/failure handling.
-- `engagement/tests.py` — **fixed a regression I found, not just added
-  tests.** The existing 11 tests never gave their users a completed
-  profile — applying the gating broke 7 of them (confirmed: ran the suite
-  before fixing, got 4 failures + 3 errors). Fixed by having `setUp()`
-  create completed profiles for the existing test users, so those tests
-  go back to testing comment/reaction *behavior*, not accidentally
-  re-testing gating in every single one. Added a new
-  `EngagementProfileGatingTestCase` (8 tests) specifically for the gating
-  itself: AJAX blocking with structured JSON, non-AJAX real redirects,
-  Referer-based redirect-back target (and its fallback), the full
-  blocked→complete→retry loop, a blank-but-existing profile still being
-  blocked, and anonymous users being unaffected.
+`static/` is the **source** folder you put your own files in (favicon, custom
+CSS, etc.) and is declared in `STATICFILES_DIRS`. `staticfiles_local/` is
+the **output** folder that `collectstatic` populates in development — it's
+Django's `STATIC_ROOT` when `ENVIRONMENT` is not staging/production, and
+is generated/regenerated automatically, never needs to be committed. Both
+are correct and should exist. No code change needed — this is just a
+misunderstanding of how Django's static files pipeline works.
 
-## Verified, not just written
-Ran in an isolated sandbox (fresh sqlite, dummy env vars, real venv,
-**this session's actual current `requirements.txt`** — it had grown since
-Phase 1, several new required env vars surfaced and were supplied):
-- `migrate`/`check` clean (1 unrelated pre-existing CKEditor warning)
-- Full repo-wide suite: **42/42 passing** (18 original + 16 profiles +
-  19 engagement, net of the 11→19 engagement growth)
-- Manual end-to-end via Django's test client: AJAX comment/reaction
-  blocked with structured JSON when incomplete; `profile_next` correctly
-  uses Referer (confirmed NOT the API endpoint URL, which would have
-  405'd); non-AJAX gets a real redirect; full loop (blocked → complete
-  profile via the actual form → land back on the **exact** originating
-  page, not just the bare dashboard) confirmed working end-to-end; same
-  profile completeness check confirmed shared correctly across different
-  client sessions for the same user (not session-scoped).
+**Files changed:** none.
 
-**Not verified:** your actual Windows/Docker environment, a real deploy,
-or the JS in an actual browser (DOM/fetch behavior reasoned through and
-mirrors the existing reaction/comment success-path code exactly, but
-never executed outside Django's test client).
+## Issue 3 — docker-compose.vm.yml mounts ./staticfiles (host path that doesn't exist)
 
-## Not done (later phases per the task doc)
-Comment edit/delete (Phase 3), nav links for Dashboard/Profile/Logout
-(Phase 4), Cypress `.feature` files (Phase 5), remaining Phase 6 items.
+**Root cause (my error):** I wrote the compose file using `./staticfiles`
+bind-mounts for both `web-*` and `nginx-*` services. In staging/production,
+`STATIC_ROOT = '/app/staticfiles'` is inside the container (populated at
+build time or by `collectstatic` at startup) — not a directory on the host.
+Binding `./staticfiles` from the repo root mounted a non-existent host
+directory, which silently shadows the container's existing `/app/staticfiles`
+with an empty directory.
+
+**Fix:** replaced the bind-mounts with named Docker volumes
+(`staticfiles_staging`, `staticfiles_production`) declared at the top of
+the compose file. Both `web-*` (writes to it) and `nginx-*` (reads from
+it) now reference the same named volume per environment, so `collectstatic`
+output is actually shared. No host directory needed.
+
+**Files changed:** `docker-compose.vm.yml`
+
+## Issue 4 — Dockerfile.compile pre-import step fails with GCP_PROJECT_ID missing
+
+**Root cause:** `base.py` calls `require_env('GCP_PROJECT_ID')` unconditionally
+at module import time. The second `RUN` block (PyInstaller build) already
+had `GCP_PROJECT_ID=dummy-for-build`, but the *first* `RUN` block (the
+pre-import sanity check for `blog.templatetags`) was missing it, along
+with `SITE_HEADER`, `SITE_TITLE`, `SITE_INDEX_TITLE`, `APP_PROTOCOL`,
+`APP_DOMAIN`, `APP_PORT`. Django imports the entire settings module just
+to do `django.setup()`, so every `require_env()` call fires.
+
+**Also found:** `profiles/` and `core/` (both added in Phase 1) were not
+in the `COPY` list — they wouldn't exist inside the container, causing an
+`ImportError` on the very first request touching any profile or adapter
+logic. Added them to both `COPY` and `--collect-all`.
+
+**Files changed:** `Dockerfile.compile`

@@ -9,15 +9,25 @@ from django.conf import settings
 class Command(BaseCommand):
     help = 'Backup the database to a JSON fixture file'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--output-dir',
+            type=str,
+            help='Directory to save the backup (default: data/backups/ relative to BASE_DIR)'
+        )
+
     def handle(self, *args, **options):
-        # Create backup directory if not exists
-        backup_dir = settings.BASE_DIR / 'data' / 'backups'
+        output_dir = options['output_dir']
+        if output_dir:
+            backup_dir = os.path.abspath(output_dir)
+        else:
+            backup_dir = settings.BASE_DIR / 'data' / 'backups'
+
         os.makedirs(backup_dir, exist_ok=True)
 
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        backup_file = backup_dir / f'db_backup_{timestamp}.json'
+        backup_file = os.path.join(backup_dir, f'db_backup_{timestamp}.json')
 
-        # Dump all data except contenttypes and sessions (which can be recreated)
         with open(backup_file, 'w', encoding='utf-8') as f:
             call_command('dumpdata',
                          exclude=['contenttypes', 'sessions'],

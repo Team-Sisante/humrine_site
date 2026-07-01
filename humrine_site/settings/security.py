@@ -6,7 +6,7 @@ Security-related settings: SECRET_KEY, DEBUG, ENVIRONMENT, ALLOWED_HOSTS, CSRF, 
 
 import os
 from django.core.exceptions import ImproperlyConfigured
-from .base import get_env_variable
+from .base import require_env
 
 # ---- ENVIRONMENT detection ----
 if os.getenv('PYINSTALLER_BUILD') == 'true':
@@ -22,12 +22,12 @@ else:
     ENVIRONMENT = ENVIRONMENT.strip().lower()
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = get_env_variable('SECRET_KEY')
+SECRET_KEY = require_env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = get_env_variable('DEBUG', 'False').lower() == 'true'
+DEBUG = require_env('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = get_env_variable('ALLOWED_HOSTS', '').split(',')
+ALLOWED_HOSTS = require_env('ALLOWED_HOSTS', '').split(',')
 if DEBUG:
     ALLOWED_HOSTS.append('.cloudshell.dev')
 
@@ -46,9 +46,9 @@ CSRF_TRUSTED_ORIGINS += [
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 if not DEBUG:
-    SECURE_SSL_REDIRECT = get_env_variable('SECURE_SSL_REDIRECT', 'True').lower() == 'true'
+    SECURE_SSL_REDIRECT = require_env('SECURE_SSL_REDIRECT', 'True').lower() == 'true'
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = int(get_env_variable('SECURE_HSTS_SECONDS', '31536000'))
+    SECURE_HSTS_SECONDS = int(require_env('SECURE_HSTS_SECONDS', '31536000'))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
