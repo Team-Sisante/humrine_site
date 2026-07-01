@@ -41,14 +41,6 @@ def require_env(var_name, default=None):
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-# Helper function to get environment variables strictly from OS
-def get_env_variable(var_name, default=None):
-    if var_name in os.environ:
-        return os.environ[var_name]
-    if default is not None:
-        return default
-    raise ImproperlyConfigured(f"Set the {var_name} environment variable")
-
 # ============================================================
 # STRICT VALIDATION — no silent defaults (per Roadmap #52)
 # If ENVIRONMENT is missing or blank, fail immediately with a clear error.
@@ -206,7 +198,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.facebook',
-    'allauth.socialaccount.providers.twitter',
+    'allauth.socialaccount.providers.twitter_oauth2',
 
     # Local apps
     'home',
