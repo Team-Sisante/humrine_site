@@ -14,6 +14,9 @@ networks:
     driver: bridge
     driver_opts:
       com.docker.network.driver.mtu: 1460
+  # Shared network with badminton_court so containers can resolve each other
+  shared-net:
+    external: true   # must be created manually: docker network create shared-net
 
 services:
   # ----- Database (staging) -----
@@ -30,6 +33,7 @@ services:
       - "${POSTGRES_HOST_PORT}:5432"
     networks:
       - humrine-network
+      - shared-net   # added for cross‑project resolution (though not strictly needed for db)
     profiles: [staging]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
@@ -51,6 +55,7 @@ services:
       - "${POSTGRES_HOST_PORT}:5432"
     networks:
       - humrine-network
+      - shared-net
     profiles: [production]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
@@ -66,6 +71,7 @@ services:
       - "${REDIS_HOST_PORT}:6379"
     networks:
       - humrine-network
+      - shared-net
     profiles: [staging, production]
 
   # ----- Mail (staging) -----
@@ -84,6 +90,7 @@ services:
       - poste_data_staging:/data
     networks:
       - humrine-network
+      - shared-net
     profiles: [staging]
     healthcheck:
       test: ["CMD", "nc", "-zv", "localhost", "25"]
@@ -108,6 +115,7 @@ services:
       - poste_data_production:/data
     networks:
       - humrine-network
+      - shared-net
     profiles: [production]
     healthcheck:
       test: ["CMD", "nc", "-zv", "localhost", "25"]
@@ -252,6 +260,7 @@ services:
         condition: service_started
     networks:
       - humrine-network
+      - shared-net   # so it can be reached by badminton containers if needed
     profiles:
       - staging
 
@@ -271,10 +280,11 @@ services:
       - web-staging
     networks:
       - humrine-network
+      - shared-net   # required to resolve badminton container names
     profiles:
       - staging
 
-  # ----- Cypress E2E tests against staging (on-demand, not auto-run) -----
+  # ----- Cypress E2E tests against staging (on-demand) -----
   cypress-staging:
     container_name: humrine-cypress-staging
     build:
@@ -301,6 +311,7 @@ services:
         condition: service_healthy
     networks:
       - humrine-network
+      - shared-net
     profiles:
       - staging-test
 
@@ -440,6 +451,7 @@ services:
         condition: service_started
     networks:
       - humrine-network
+      - shared-net
     profiles:
       - production
 
@@ -459,10 +471,11 @@ services:
       - web-production
     networks:
       - humrine-network
+      - shared-net
     profiles:
       - production
 
-  # ----- Cypress E2E tests against production (on-demand, not auto-run) -----
+  # ----- Cypress E2E tests against production (on-demand) -----
   cypress-production:
     container_name: humrine-cypress-production
     build:
@@ -489,5 +502,6 @@ services:
         condition: service_healthy
     networks:
       - humrine-network
+      - shared-net
     profiles:
       - production-test
