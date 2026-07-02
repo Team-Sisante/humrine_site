@@ -2,23 +2,35 @@
 # This file is processed by deploy.js – placeholders will be replaced at deploy time.
 
 events {}
+
 http {
     server {
         listen __WEB_HOST_PORT__;
-        listen [::]:__WEB_HOST_PORT__;  
+        listen [::]:__WEB_HOST_PORT__;
         server_name _;
 
+        # ============ BADMINTON COURT APP (STAGING) ============
+        # Forward /court/ to the Badminton staging backend
+        location /court/ {
+            proxy_pass http://__BADMINTON_STAGING_BACKEND__:8000/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto https;
+        }
+
+        # ============ MAIN HUMRINE SITE (STAGING) ============
         location / {
             proxy_pass http://__BACKEND_SERVICE__:8000;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto https;
-            
-            # Maintenance page configuration
-            proxy_intercept_errors on;
-            error_page 502 503 504 /offline.html;
         }
+
+        # Maintenance page configuration
+        proxy_intercept_errors on;
+        error_page 502 503 504 /offline.html;
 
         location /offline.html {
             root /var/www/html;
