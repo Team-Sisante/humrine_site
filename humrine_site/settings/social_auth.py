@@ -10,7 +10,7 @@ from .base import require_env
 # Check if we're running tests
 is_running_tests = (
     os.getenv('CYPRESS', 'false') == 'true' or
-    (require_env('ENVIRONMENT') == 'docker' and require_env('CYPRESS'))
+    (require_env('ENVIRONMENT') == 'docker' and os.getenv('CYPRESS', 'false') == 'true')
 )
 
 if is_running_tests:
@@ -20,6 +20,14 @@ if is_running_tests:
 else:
     # Production/development settings
     ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+
+# Force https for OAuth callback URLs in staging/production.
+# Without this, allauth uses request.scheme which is 'http' when sitting
+# behind the GCP load balancer (SSL is terminated at the LB, not at nginx).
+# Even though SECURE_PROXY_SSL_HEADER is set, this is a belt-and-suspenders
+# fix that ensures OAuth redirect_uris are always https:// in non-dev envs.
+_env = require_env('ENVIRONMENT')
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http' if _env in ('development', 'docker') else 'https'
 
 # Django Allauth Configuration
 ACCOUNT_LOGIN_METHODS = {'email'}  # Allow login with email only

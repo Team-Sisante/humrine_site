@@ -1,0 +1,21 @@
+{# engagement/templates/engagement/_reactions_only.html #}
+{# Lightweight reaction-only bar for per-image use inside gallery loops.  #}
+{# Rendered via {% render_reactions img %} from engagement_extras.         #}
+{% load static engagement_extras %}
+
+<div class="engagement-reactions engagement-reactions--inline mt-2"
+     data-app-label="{{ engagement_app_label }}"
+     data-model-name="{{ engagement_model_name }}"
+     data-object-id="{{ engagement_object_id }}">
+    {% for code, emoji in reaction_choices %}
+        <button type="button"
+                class="btn btn-sm reaction-btn{% if user_reaction == code %} active{% endif %}"
+                data-reaction-type="{{ code }}"
+                {% if not request.user.is_authenticated %}data-requires-login="1"{% endif %}>
+            {{ emoji }} <span class="reaction-count">{{ reaction_counts|get_item:code }}</span>
+        </button>
+    {% endfor %}
+    {% if not request.user.is_authenticated %}
+        <a href="/accounts/login/?next={{ request.path }}" class="text-muted small ms-2">Log in to react</a>
+    {% endif %}
+</div>
