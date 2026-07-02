@@ -5,5 +5,4 @@ module.exports = async function (helpers) {
   if (confirmEncrypt.toLowerCase() === 'yes') {
     runCommand(`echo 'Encrypting .env files...' && node Scripts/encryptenvfiles.js`);
   }
-  await pause();
 };
