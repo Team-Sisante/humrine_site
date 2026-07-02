@@ -1,70 +1,41 @@
-# Hotfix: 4 issues
+# Fix: 3 issues — CKEditor in toons, per-image reactions, Google OAuth redirect_uri_mismatch
 
-## Issue 1 — Twitter button missing from login.html + Third-Party Login Failure
+## Issue 1 — CKEditor not showing in toons admin
 
-**Root cause (two problems):**
-1. `login.html`'s `{% else %}` fallback block (used when no `SocialApp`
-   credentials are registered in the Django admin yet) only had Google and
-   Facebook hardcoded — Twitter was omitted. `signup.html` had all three.
-   A missing button was the visible symptom; adding it back is the fix.
+**Root cause:** `ToonStory.description` was a plain `TextField`, so the admin showed a bare `<textarea>`. The `ckeditor.py` already had a `'toons'` config waiting to be used — it just wasn't wired into the model. Additionally, `ckeditor_uploader.urls` was commented out in `urls.py`, which would have broken image upload inside the editor even if the widget appeared.
 
-2. `social_auth.py`'s Twitter provider config had `SCOPE: ['tweet.read',
-   'users.read']` — those are Twitter API v2 / OAuth2 scopes — but no
-   `'METHOD': 'oauth2'` or `'OAUTH_PKCE_ENABLED': True`. The provider
-   defaults to OAuth1, allauth sends an OAuth1 flow, Twitter's OAuth2-
-   registered app rejects it → "Third-Party Login Failure". Fixed by
-   adding the correct method settings that match the v2 scopes.
-   **Note:** this assumes the app in the Twitter Developer Console is
-   actually registered as an OAuth2 app with `tweet.read`/`users.read`
-   permissions. If it's an OAuth1 app, the scopes need to change instead:
-   remove `SCOPE`, keep `METHOD: 'oauth1'` (or just remove the config
-   block entirely and let allauth use its defaults).
+**Files changed:**
+- `toons/models.py` — `description` changed to `RichTextUploadingField(config_name='toons', blank=True)`. Also cleaned up the commented import.
+- `toons/migrations/0002_alter_toonstory_description.py` — **must run `python manage.py migrate` after applying.** Safe: both `TextField` and `RichTextUploadingField` are text columns at the database level, so no data is affected.
+- `humrine_site/urls.py` — `path('ckeditor/', include('ckeditor_uploader.urls'))` uncommented.
 
-**Files changed:** `templates/account/login.html`, `humrine_site/settings/social_auth.py`
+## Issue 2 — Multiple images but only one can be liked (per-image reactions)
 
-## Issue 2 — Two static folders
+**Root cause:** `{% include "engagement/_comments_reactions.html" %}` was placed once after the gallery loop, which means ALL images shared a single reaction counter (the post's). Each `PostImage` object is its own Django model that the engagement generic relation can target directly via `/engagement/react/blog/postimage/{img.pk}/` — it just wasn't being used per-image.
 
-`static/` is the **source** folder you put your own files in (favicon, custom
-CSS, etc.) and is declared in `STATICFILES_DIRS`. `staticfiles_local/` is
-the **output** folder that `collectstatic` populates in development — it's
-Django's `STATIC_ROOT` when `ENVIRONMENT` is not staging/production, and
-is generated/regenerated automatically, never needs to be committed. Both
-are correct and should exist. No code change needed — this is just a
-misunderstanding of how Django's static files pipeline works.
+**Design decision:** kept the full comments+reactions widget at the post level (bottom of the page — the right place for comments), and added a lightweight reaction-only bar beneath each image. This avoids a comment form under every single photo, which would be excessive.
 
-**Files changed:** none.
+**Files changed:**
+- `engagement/templatetags/engagement_extras.py` — added `render_reactions` inclusion tag: takes any model instance, computes its reaction counts + current user's reaction, renders via `_reactions_only.html`. Used as `{% render_reactions img %}`.
+- `engagement/templates/engagement/_reactions_only.html` — new lightweight template: reaction buttons only, no comments form.
+- `blog/models.py` — added `PostImage.get_absolute_url()` returning the parent post's URL. Required so the dashboard can link back from per-image reactions ("You reacted to Image for X" → links to the post page).
+- `templates/blog/post_detail.html` — added `{% load engagement_extras %}` and `{% render_reactions img %}` inside the gallery loop.
 
-## Issue 3 — docker-compose.vm.yml mounts ./staticfiles (host path that doesn't exist)
+## Issue 3 — Google OAuth `redirect_uri_mismatch` (http:// instead of https://)
 
-**Root cause (my error):** I wrote the compose file using `./staticfiles`
-bind-mounts for both `web-*` and `nginx-*` services. In staging/production,
-`STATIC_ROOT = '/app/staticfiles'` is inside the container (populated at
-build time or by `collectstatic` at startup) — not a directory on the host.
-Binding `./staticfiles` from the repo root mounted a non-existent host
-directory, which silently shadows the container's existing `/app/staticfiles`
-with an empty directory.
+**Root cause:** SSL is terminated at the GCP load balancer, not at nginx. By the time a request reaches nginx, it's HTTP. Nginx was sending `proxy_set_header X-Forwarded-Proto $scheme` where `$scheme` is `http`. Django sees this header and builds `http://humrine.com/accounts/google/login/callback/` as the OAuth callback URL — which doesn't match Google's registered `https://` redirect URI.
 
-**Fix:** replaced the bind-mounts with named Docker volumes
-(`staticfiles_staging`, `staticfiles_production`) declared at the top of
-the compose file. Both `web-*` (writes to it) and `nginx-*` (reads from
-it) now reference the same named volume per environment, so `collectstatic`
-output is actually shared. No host directory needed.
+**Files changed:**
+- `nginx-production.conf.template` — `$scheme` → hardcoded `https`. Since this nginx is always behind the GCP HTTPS load balancer, the protocol is always HTTPS from the client's perspective.
+- `nginx-staging.conf.template` — same fix.
+- `humrine_site/settings/social_auth.py`:
+  - Added `ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'` for staging/production (`'http'` for development/docker). Belt-and-suspenders: even if the proxy header is misconfigured, allauth will always generate `https://` callback URLs in production.
+  - Fixed `require_env('CYPRESS')` bug: would have raised `ImproperlyConfigured` if `ENVIRONMENT == 'docker'` and `CYPRESS` wasn't set. Changed to `os.getenv('CYPRESS', 'false') == 'true'` which is safe regardless of whether the var is set.
 
-**Files changed:** `docker-compose.vm.yml`
+**After deploying these nginx template changes**, the updated nginx configs will be regenerated by `deploy.js` on the next deploy — no manual action needed on the VM.
 
-## Issue 4 — Dockerfile.compile pre-import step fails with GCP_PROJECT_ID missing
-
-**Root cause:** `base.py` calls `require_env('GCP_PROJECT_ID')` unconditionally
-at module import time. The second `RUN` block (PyInstaller build) already
-had `GCP_PROJECT_ID=dummy-for-build`, but the *first* `RUN` block (the
-pre-import sanity check for `blog.templatetags`) was missing it, along
-with `SITE_HEADER`, `SITE_TITLE`, `SITE_INDEX_TITLE`, `APP_PROTOCOL`,
-`APP_DOMAIN`, `APP_PORT`. Django imports the entire settings module just
-to do `django.setup()`, so every `require_env()` call fires.
-
-**Also found:** `profiles/` and `core/` (both added in Phase 1) were not
-in the `COPY` list — they wouldn't exist inside the container, causing an
-`ImportError` on the very first request touching any profile or adapter
-logic. Added them to both `COPY` and `--collect-all`.
-
-**Files changed:** `Dockerfile.compile`
+## Verified
+- `python manage.py check` — clean (1 pre-existing CKEditor warning)
+- `python manage.py migrate` — `toons.0002_alter_toonstory_description` applied cleanly
+- `python manage.py test blog toons engagement profiles` — 42/42 passing
+- End-to-end functional test: `PostImage.get_absolute_url()` returns parent post URL; per-image reactions rendered in gallery; full post-level engagement widget also rendered

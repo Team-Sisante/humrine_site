@@ -1,7 +1,7 @@
 <!-- templates/blog/post_detail.html -->
 
 {% extends "base.html" %}
-{% load static %}
+{% load static engagement_extras %}
 
 {% block title %}{{ post.title }} – Humrine Blog{% endblock %}
 
@@ -40,6 +40,8 @@
                             {% if img.caption %}
                                 <p class="blog-gallery__caption">{{ img.caption }}</p>
                             {% endif %}
+                            {# Per-image reaction bar — each image has its own independent like/heart/etc. counts #}
+                            {% render_reactions img %}
                         </div>
                     {% endfor %}
                 </div>
